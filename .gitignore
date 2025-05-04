@@ -2,7 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+hd_notebook.docx
+high-level-tts.excalidraw.png
+horror-background-atmosphere-156462.mp3
+notebooks/*
+.DS_Store
 # C extensions
 *.so
 
