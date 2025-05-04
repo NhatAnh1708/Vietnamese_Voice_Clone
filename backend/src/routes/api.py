@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 from loguru import logger
 
-
-
 router = APIRouter()
+
+
 @router.get("/health", tags=["Heath check"])
 async def health_check():
     """Health check endpoint.

@@ -2,9 +2,11 @@ import os
 import subprocess
 from huggingface_hub import snapshot_download
 
+
 def run(cmd):
     print(f"Running: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
+
 
 def main():
     print("⏳ Đang cài đặt môi trường...")
@@ -24,7 +26,7 @@ def main():
         "unidic==1.1.0",
         "underthesea",
         "gradio==4.35",
-        "deepfilternet==0.5.6"
+        "deepfilternet==0.5.6",
     ]
     for pkg in deps:
         run(f"pip install -q {pkg}")
@@ -37,6 +39,7 @@ def main():
     snapshot_download(repo_id="thinhlpg/viXTTS", repo_type="model", local_dir="model")
 
     print("✅ Cài đặt hoàn tất!")
+
 
 if __name__ == "__main__":
     main()

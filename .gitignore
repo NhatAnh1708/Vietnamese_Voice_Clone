@@ -9,7 +9,9 @@ notebooks/*
 .DS_Store
 # C extensions
 *.so
-
+backend/src/core/output/*.wav
+backend/src/TTS/*
+backend/src/model_registry/*
 # Distribution / packaging
 .Python
 build/
