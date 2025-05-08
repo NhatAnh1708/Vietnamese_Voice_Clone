@@ -11,9 +11,10 @@ import CustomDropdown from './CustomDropdown';
 
 interface RightNavProps {
   isCompact: boolean; // Truyền vào từ component cha để xác định hiển thị gọn hay đầy đủ
+  disabled?: boolean;
 }
 
-export default function RightNav({ isCompact }: RightNavProps) {
+export default function RightNav({ isCompact, disabled = false }: RightNavProps) {
   const { darkMode } = useTheme();
   const { translations } = useLanguage();
   
@@ -64,6 +65,27 @@ export default function RightNav({ isCompact }: RightNavProps) {
     setMood(translations.none);
   };
 
+  const [syncing, setSyncing] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
+
+  const handleSyncModel = async () => {
+    setSyncing(true);
+    setSyncMessage("");
+    try {
+      const response = await fetch("http://localhost:8000/api/load-model");
+      if (!response.ok) {
+        throw new Error("Lỗi khi sync model");
+      }
+      setSyncMessage("Tải model thành công!");
+    } catch (error) {
+      setSyncMessage("Tải model thất bại!");
+    } finally {
+      setSyncing(false);
+      setShowSyncModal(true);
+    }
+  };
+
   // Nếu là chế độ compact (cho màn hình nhỏ), sẽ hiển thị dạng gọn lại
   if (isCompact) {
     return (
@@ -92,6 +114,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
               options={voiceOptions}
               onChange={setVoice}
               compact={true}
+              disabled={disabled}
             />
             
             <CustomDropdown
@@ -100,6 +123,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
               options={moodOptions}
               onChange={setMood}
               compact={true}
+              disabled={disabled}
             />
           </div>
 
@@ -122,6 +146,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
                 value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
                 onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
                 className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+                disabled={disabled}
               />
             </div>
 
@@ -142,6 +167,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
                 value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
                 onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
                 className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+                disabled={disabled}
               />
             </div>
 
@@ -162,6 +188,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
                 value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
                 onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
                 className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+                disabled={disabled}
               />
             </div>
 
@@ -182,6 +209,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
                 value={toPercent(stability, paramRanges.stability.min, paramRanges.stability.max)}
                 onChange={(e) => setStability(fromPercent(parseInt(e.target.value), paramRanges.stability.min, paramRanges.stability.max))}
                 className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+                disabled={disabled}
               />
             </div>
           </div>
@@ -194,9 +222,19 @@ export default function RightNav({ isCompact }: RightNavProps) {
                 ? 'bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700' 
                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
+            disabled={disabled}
           >
             <ArrowPathIcon className="h-3 w-3 mr-1" />
             {translations.defaultSettings}
+          </button>
+
+          {/* Nút Sync Model */}
+          <button
+            onClick={handleSyncModel}
+            disabled={syncing || disabled}
+            className="w-full mt-2 flex items-center justify-center py-2 px-3 rounded-md shadow-sm text-xs bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {syncing ? "Đang tải model..." : "Sync Model"}
           </button>
         </div>
       </div>
@@ -229,6 +267,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
             value={voice}
             options={voiceOptions}
             onChange={setVoice}
+            disabled={disabled}
           />
 
           {/* Mood Selection - Thay select bằng custom dropdown */}
@@ -237,6 +276,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
             value={mood}
             options={moodOptions}
             onChange={setMood}
+            disabled={disabled}
           />
 
           {/* Pitch Control */}
@@ -256,6 +296,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
               value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
               onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
               className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+              disabled={disabled}
             />
             <div className={`flex justify-between text-xs mt-2 ${
               darkMode ? 'text-gray-400' : 'text-gray-700'
@@ -282,6 +323,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
               value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
               onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
               className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+              disabled={disabled}
             />
             <div className={`flex justify-between text-xs mt-2 ${
               darkMode ? 'text-gray-400' : 'text-gray-700'
@@ -308,6 +350,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
               value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
               onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
               className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+              disabled={disabled}
             />
             <div className={`flex justify-between text-xs mt-2 ${
               darkMode ? 'text-gray-400' : 'text-gray-700'
@@ -334,6 +377,7 @@ export default function RightNav({ isCompact }: RightNavProps) {
               value={toPercent(stability, paramRanges.stability.min, paramRanges.stability.max)}
               onChange={(e) => setStability(fromPercent(parseInt(e.target.value), paramRanges.stability.min, paramRanges.stability.max))}
               className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+              disabled={disabled}
             />
             <div className={`flex justify-between text-xs mt-2 ${
               darkMode ? 'text-gray-400' : 'text-gray-700'
@@ -351,9 +395,19 @@ export default function RightNav({ isCompact }: RightNavProps) {
                 ? 'bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700' 
                 : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
+            disabled={disabled}
           >
             <ArrowPathIcon className="h-4 w-4 mr-2" />
             {translations.defaultSettings}
+          </button>
+
+          {/* Nút Sync Model */}
+          <button
+            onClick={handleSyncModel}
+            disabled={syncing || disabled}
+            className="w-full mt-2 flex items-center justify-center py-2 px-3 rounded-md shadow-sm text-xs bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {syncing ? "Đang tải model..." : "Sync Model"}
           </button>
         </div>
       </div>
@@ -366,6 +420,21 @@ export default function RightNav({ isCompact }: RightNavProps) {
           © 2025 Synsere. All rights reserved.
         </div>
       </div>
+
+      {/* Popup thông báo sync model */}
+      {showSyncModal && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-white border border-gray-300 rounded-lg shadow-lg px-6 py-4 min-w-[220px] text-center flex flex-col items-center">
+            <div className="mb-2 text-base font-semibold text-gray-800">{syncMessage}</div>
+            <button
+              onClick={() => setShowSyncModal(false)}
+              className="mt-1 px-3 py-1 bg-black text-white rounded hover:bg-gray-800 text-sm"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

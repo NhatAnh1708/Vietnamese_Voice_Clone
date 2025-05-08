@@ -7,9 +7,10 @@ interface GenerateControlsProps {
   text: string;
   onGenerate: () => void;
   isCompact?: boolean; // Thêm prop để hỗ trợ hiển thị trên màn hình nhỏ
+  disabled?: boolean;
 }
 
-export default function GenerateControls({ text, onGenerate, isCompact = false }: GenerateControlsProps) {
+export default function GenerateControls({ text, onGenerate, isCompact = false, disabled = false }: GenerateControlsProps) {
   const { darkMode } = useTheme();
   const { translations } = useLanguage();
   const [wordCount, setWordCount] = useState(0);
@@ -29,7 +30,7 @@ export default function GenerateControls({ text, onGenerate, isCompact = false }
         {/* Generate Button */}
         <button
           onClick={onGenerate}
-          disabled={wordCount > maxWords}
+          disabled={wordCount > maxWords || disabled}
           className={`w-full py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
           wordCount > maxWords 
           ? 'bg-gray-300 cursor-not-allowed text-gray-500'
@@ -101,7 +102,7 @@ export default function GenerateControls({ text, onGenerate, isCompact = false }
       {/* Generate Button */}
       <button
         onClick={onGenerate}
-        disabled={wordCount > maxWords}
+        disabled={wordCount > maxWords || disabled}
         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
         wordCount > maxWords 
         ? 'bg-gray-300 cursor-not-allowed text-gray-500'

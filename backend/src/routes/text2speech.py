@@ -1,5 +1,5 @@
-
 import time
+import os
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
@@ -42,11 +42,7 @@ async def text_to_speech(item: Text2SpeechRequest):
             speaker_audio_file=item.reference_audio,
         )
         logger.info(f"Ended inference in {time.time() - start_time:.2f} seconds")
-        return FileResponse(
-            audio_file,
-            media_type="audio/wav",
-            filename=audio_file.split("/")[-1],
-        )
+        return {"audio_file": audio_file}
     except ValueError as e:
         logger.error(f"Error during inference: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -60,5 +56,18 @@ async def test_audio_file(audio_file: str):
         audio_file,
         media_type="audio/wav",
         filename=audio_file.split("/")[-1],
+    )
+
+@router.get("/audio/{filename}")
+async def get_audio_file(filename: str):
+    # Đường dẫn thư mục chứa file output
+    audio_dir = "/home/azureuser/caotien/Synsere_TTS/backend/src/core/output"
+    file_path = os.path.join(audio_dir, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(
+        file_path,
+        media_type="audio/wav",
+        filename=filename
     )
 

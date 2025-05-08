@@ -19,7 +19,7 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const user = {
-    name: 'Đỗ Cao Tiến',
+    name: 'Admin',
     workspace: translations.myWorkspace, // Thay đổi ở đây để sử dụng dịch
     avatarText: 'CT'
   };

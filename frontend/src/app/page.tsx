@@ -10,6 +10,15 @@ import { PlayIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 
+// Định nghĩa type cho request text2speech
+interface Text2SpeechRequest {
+  language: string;
+  input_text: string;
+  reference_audio: string;
+  normalize_text: boolean;
+  verbose: boolean;
+}
+
 export default function Home() {
   const { darkMode, toggleDarkMode } = useTheme();
   const { language, toggleLanguage, translations } = useLanguage();
@@ -17,6 +26,8 @@ export default function Home() {
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
   const [text, setText] = useState("");
   const [showMobileLeftNav, setShowMobileLeftNav] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Thêm state để xác định kích thước màn hình
   const [screenSize, setScreenSize] = useState({
@@ -25,9 +36,45 @@ export default function Home() {
     isSmall: false    // < 760px
   });
   
-  const handleGenerate = () => {
-    // Xử lý logic generate speech ở đây
-    console.log("Generating speech...");
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    setAudioUrl(undefined);
+    // Chuẩn bị dữ liệu gửi lên backend
+    const requestData: Text2SpeechRequest = {
+      language: language || "vi",
+      input_text: text || "Xin chào bạn, tôi là chatbot của DONYAI",
+      reference_audio: "/home/azureuser/caotien/Synsere_TTS/backend/src/model_registry/samples/nam-truyen-cam.wav",
+      normalize_text: true,
+      verbose: true,
+    };
+    try {
+      const response = await fetch("http://localhost:8000/api/text-to-speech", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+      if (!response.ok) {
+        throw new Error("Lỗi khi gọi API text2speech");
+      }
+      const data = await response.json();
+      console.log("Kết quả text2speech:", data);
+      // Xử lý kết quả trả về: lấy đường dẫn file audio và build url public
+      if (data.audio_file) {
+        // Nếu backend trả về đường dẫn tuyệt đối, chỉ lấy tên file
+        const filename = data.audio_file.split("/").pop();
+        // Giả sử backend phục vụ file qua endpoint /api/audio/{filename}
+        setAudioUrl(`http://localhost:8000/api/audio/${filename}`);
+      } else {
+        setAudioUrl(undefined);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gọi API text2speech:", error);
+      setAudioUrl(undefined);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Toggle mobile left nav
@@ -102,6 +149,7 @@ export default function Home() {
                       : 'bg-white text-black border-gray-200 placeholder-gray-400'
                   }`}
                   placeholder={translations.typePasteText}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -115,7 +163,7 @@ export default function Home() {
             {/* RightNav dạng nhỏ gọn cho màn hình nhỏ */}
             {screenSize.isSmall && (
               <div className="px-5 py-3">
-                <RightNav isCompact={true} />
+                <RightNav isCompact={true} disabled={isLoading} />
               </div>
             )}
             
@@ -127,6 +175,7 @@ export default function Home() {
               text={text}
               onGenerate={handleGenerate}
               isCompact={screenSize.isSmall}
+              disabled={isLoading}
             />
             
             {/* Điều chỉnh khoảng cách dưới để chỉ còn 0.8cm với Player Footer */}
@@ -149,7 +198,7 @@ export default function Home() {
         </main>
         
         {/* Ẩn RightNav khi màn hình nhỏ */}
-        {!screenSize.isSmall && <RightNav isCompact={false} />}
+        {!screenSize.isSmall && <RightNav isCompact={false} disabled={isLoading} />}
       </div>
       
       {/* LeftNav dạng mobile overlay - FINAL VERSION */}
@@ -229,6 +278,8 @@ export default function Home() {
             setShowMiniPlayer(true);
           }}
           isCompact={screenSize.isSmall}
+          audioUrl={audioUrl}
+          isLoading={isLoading}
         />
       )}
       
