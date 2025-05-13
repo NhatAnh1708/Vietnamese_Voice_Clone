@@ -4,10 +4,14 @@ import { BookOpenIcon, FaceSmileIcon, RadioIcon, MoonIcon } from '@heroicons/rea
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
 
-export default function StoryGenre() {
+interface StoryGenreProps {
+  selectedGenre: string;
+  setSelectedGenre: (g: string) => void;
+}
+
+export default function StoryGenre({ selectedGenre, setSelectedGenre }: StoryGenreProps) {
   const { darkMode } = useTheme();
   const { translations } = useLanguage();
-  const [selectedGenre, setSelectedGenre] = useState<string>('comedy');
   
   const genres = [
     { id: 'narrate', name: translations.narrate, icon: <BookOpenIcon className="w-4 h-4" /> },

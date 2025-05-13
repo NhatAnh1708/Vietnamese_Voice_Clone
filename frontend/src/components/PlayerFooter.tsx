@@ -216,9 +216,9 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
                 {translations.currentAudio}
               </div>
               {isLoading ? (
-                <div className="flex items-center text-[10px] text-blue-600 animate-pulse">
+                <div className="flex items-center text-[10px] text-black animate-pulse">
                   <span>Đang xử lý...</span>
-                  <svg className="ml-1 w-3 h-3 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                  <svg className="ml-1 w-3 h-3 animate-spin text-black" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
                 </div>
               ) : (
                 <div className="flex text-[10px] space-x-2">
@@ -332,7 +332,7 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
                     onClick={handleBarClick}
                   >
                     <div
-                      className={`absolute top-0 left-0 h-2 rounded-full ${darkMode ? 'bg-blue-400' : 'bg-blue-600'}`}
+                      className={`absolute top-0 left-0 h-2 rounded-full bg-black`}
                       style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
                     />
                   </div>
@@ -347,6 +347,19 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
                 onLoadedMetadata={() => setIsAudioReady(true)}
                 style={{ display: 'none' }}
               />
+              {/* Nút tải về file audio */}
+              {audioUrl && (
+                <a
+                  href={audioUrl}
+                  download
+                  className={`ml-2 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'}`}
+                  title="Tải về audio"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l-6-6m6 6l6-6" />
+                  </svg>
+                </a>
+              )}
               {/* Nút đóng */}
               <button
                 onClick={onClose}
@@ -436,9 +449,9 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
                 darkMode ? 'text-gray-200' : 'text-gray-800'
               }`}>{translations.currentAudio}</div>
               {isLoading ? (
-                <div className="flex items-center text-xs text-blue-600 animate-pulse">
+                <div className="flex items-center text-xs text-black animate-pulse">
                   <span>Đang xử lý...</span>
-                  <svg className="ml-1 w-3 h-3 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                  <svg className="ml-1 w-3 h-3 animate-spin text-black" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
                 </div>
               ) : (
                 <div className={`text-xs ${
@@ -459,8 +472,8 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
             >
               {isLoading ? (
                 <div className="w-full h-full flex items-center justify-center">
-                  <div className="w-2/3 h-2 bg-blue-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 animate-pulse rounded-full" style={{ width: '60%' }}></div>
+                  <div className="w-2/3 h-2 bg-black rounded-full overflow-hidden">
+                    <div className="h-full bg-black animate-pulse rounded-full" style={{ width: '60%' }}></div>
                   </div>
                 </div>
               ) : (

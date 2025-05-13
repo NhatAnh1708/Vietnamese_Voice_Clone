@@ -14,9 +14,12 @@ import { useLanguage } from '@/context/LanguageContext';
 interface Text2SpeechRequest {
   language: string;
   input_text: string;
-  reference_audio: string;
+  reference_audio?: string;
+  sex: string;
+  emotion: string;
   normalize_text: boolean;
   verbose: boolean;
+  audio_background?: string;
 }
 
 export default function Home() {
@@ -28,6 +31,9 @@ export default function Home() {
   const [showMobileLeftNav, setShowMobileLeftNav] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
+  const [voice, setVoice] = useState("Nữ");
+  const [emotion, setEmotion] = useState("Truyền Cảm");
+  const [selectedGenre, setSelectedGenre] = useState('comedy');
   
   // Thêm state để xác định kích thước màn hình
   const [screenSize, setScreenSize] = useState({
@@ -36,6 +42,15 @@ export default function Home() {
     isSmall: false    // < 760px
   });
   
+  // Mapping selectedGenre sang file audio background
+  const genreToAudioBackground: Record<string, string> = {
+    narrate: 'narrate-background.mp3',
+    comedy: 'comedy-background.mp3',
+    podcast: 'podcast-background.mp3',
+    horror: 'horror-background.mp3',
+  };
+  const audioBackground = genreToAudioBackground[selectedGenre] || '';
+  
   const handleGenerate = async () => {
     setIsLoading(true);
     setAudioUrl(undefined);
@@ -43,9 +58,11 @@ export default function Home() {
     const requestData: Text2SpeechRequest = {
       language: language || "vi",
       input_text: text || "Xin chào bạn, tôi là chatbot của DONYAI",
-      reference_audio: "/home/azureuser/caotien/Synsere_TTS/backend/src/model_registry/samples/nam-truyen-cam.wav",
+      sex: voice,
+      emotion: emotion,
       normalize_text: true,
       verbose: true,
+      audio_background: audioBackground,
     };
     try {
       const response = await fetch("http://localhost:8000/api/text-to-speech", {
@@ -158,12 +175,19 @@ export default function Home() {
             <div className="h-3"></div>
             
             {/* Story Genre Component */}
-            <StoryGenre />
+            <StoryGenre selectedGenre={selectedGenre} setSelectedGenre={setSelectedGenre} />
             
             {/* RightNav dạng nhỏ gọn cho màn hình nhỏ */}
             {screenSize.isSmall && (
               <div className="px-5 py-3">
-                <RightNav isCompact={true} disabled={isLoading} />
+                <RightNav
+                  isCompact={true}
+                  disabled={isLoading}
+                  voice={voice}
+                  setVoice={setVoice}
+                  emotion={emotion}
+                  setEmotion={setEmotion}
+                />
               </div>
             )}
             
@@ -198,7 +222,16 @@ export default function Home() {
         </main>
         
         {/* Ẩn RightNav khi màn hình nhỏ */}
-        {!screenSize.isSmall && <RightNav isCompact={false} disabled={isLoading} />}
+        {!screenSize.isSmall && (
+          <RightNav
+            isCompact={false}
+            disabled={isLoading}
+            voice={voice}
+            setVoice={setVoice}
+            emotion={emotion}
+            setEmotion={setEmotion}
+          />
+        )}
       </div>
       
       {/* LeftNav dạng mobile overlay - FINAL VERSION */}

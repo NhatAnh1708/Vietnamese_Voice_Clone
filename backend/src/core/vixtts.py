@@ -6,19 +6,20 @@ import subprocess
 from huggingface_hub import hf_hub_download, snapshot_download
 from loguru import logger
 from underthesea import sent_tokenize
-
+from pydub import AudioSegment
 import torchaudio
 import torch
 
 
 from TTS.TTS.tts.configs.xtts_config import XttsConfig
 from TTS.TTS.tts.models.xtts import Xtts
-from utils.helpers import normalize_vietnamese_text, calculate_keep_len, get_file_name, timing_decorator
+from utils.helpers import normalize_vietnamese_text, calculate_keep_len, get_file_name
 
 @dataclass
 class ViXTTS_custom:
     XTTS_MODEL: Xtts = None
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    AUDIO_BACKGROUND_DIR = os.path.join(SCRIPT_DIR, "audio_background")
     OUTPUT_DIR = os.path.join(SCRIPT_DIR, "output")
     FILTER_SUFFIX: str = "_DeepFilterNet3.wav"
     checkpoint_dir: str = "model_registry"
@@ -46,9 +47,6 @@ class ViXTTS_custom:
 
     async def init_and_load_model(self, use_deepspeed=False):
         """Init and load ViXTTS model"""
-        self.filter_cache = {}
-        self.cache_queue = []
-        self.conditioning_latents_cache = {}
         os.makedirs(self.OUTPUT_DIR, exist_ok=True)
         os.makedirs(self.checkpoint_dir, exist_ok=True)
         files_in_dir = os.listdir(self.checkpoint_dir)
@@ -82,25 +80,51 @@ class ViXTTS_custom:
 
         yield "Model Loaded!"
 
+    def find_speaker_audio_file(self, sex: str, emotion: str):
+        """Find speaker audio file based on sex and emotion"""
+        if sex == "male" or sex == "Nam":
+            sex = "nam"
+        elif sex == "female" or sex == "Nữ":
+            sex = "nu"
+        if emotion == "Vui vẻ" or emotion == "happy":
+            emotion = "nhanh"
+        elif emotion == "Buồn bã" or emotion == "sad":
+            emotion = "cham"
+        elif emotion == "Tự tin" or emotion == "confident" or emotion == "Truyền Cảm":
+            if sex == "nam":
+                emotion = "truyen-cam"
+            else:
+                emotion = "luu-loat"
+        elif emotion == "Nhút nhát" or emotion == "shy":
+            emotion = "calm"
+            
+        return os.path.join(self.checkpoint_dir, "samples", f"{sex}-{emotion}.wav")
 
-    async def inference(self,
+    async def inference(
+        self,
         input_text: str = "",
+        sex: str = "nam",
+        emotion: str = "truyen-cam",
         normalize_text: bool = True,
         use_filter: bool = True,
-        speaker_audio_file: str = "",
+        audio_background: str = "",
     ):
         """Convert text to speech using ViXTTS model"""
         if self.XTTS_MODEL is None:
             raise ValueError("Model not loaded. Call init_and_load_model() first.")
         if not input_text:
             raise ValueError("Input text is empty.")
-        speaker_audio_key = self.speaker_reference_audio
-        if not speaker_audio_key in self.cache_queue:
-            self.cache_queue.append(speaker_audio_key)
+        self.speaker_reference_audio = self.find_speaker_audio_file(sex, emotion)
+        logger.debug(f"Speaker audio key 1: {self.speaker_reference_audio}")
+        logger.debug(f"Cache queue: {self.cache_queue}")
+        logger.debug(f"Filter cache: {self.filter_cache}")
+        speaker_audio_file = self.speaker_reference_audio
+        if not speaker_audio_file in self.cache_queue:
+            self.cache_queue.append(speaker_audio_file)
             self.invalidate_cache()
-        if speaker_audio_key in self.filter_cache:
+        if speaker_audio_file in self.filter_cache:
             logger.info("Using filter cache...")
-            speaker_audio_file = self.filter_cache[speaker_audio_key]
+            speaker_audio_file = self.filter_cache[speaker_audio_file]
         subprocess.run(
             [
                 "deepFilter",
@@ -109,22 +133,24 @@ class ViXTTS_custom:
                 os.path.dirname(speaker_audio_file),
             ]
         )
-        self.filter_cache[speaker_audio_key] = speaker_audio_file.replace(
+        self.filter_cache[speaker_audio_file] = speaker_audio_file.replace(
             ".wav", self.FILTER_SUFFIX
         )
-        speaker_audio_file = self.filter_cache[speaker_audio_key]
+        speaker_audio_file = self.filter_cache[speaker_audio_file]
+        logger.debug(f"Speaker audio file: {speaker_audio_file}")
         # Check if conditioning latents are cached
         cache_key = (
-            speaker_audio_key,
+            speaker_audio_file,
             self.XTTS_MODEL.config.gpt_cond_len,
             self.XTTS_MODEL.config.max_ref_len,
             self.XTTS_MODEL.config.sound_norm_refs,
         )
+        logger.debug(f"Cache key: {cache_key}")
         if cache_key in self.conditioning_latents_cache:
             logger.info("Using conditioning latents cache...")
             gpt_cond_latent, speaker_embedding = self.conditioning_latents_cache[cache_key]
         else:
-            logger.info("Computing conditioning latents...")
+            logger.info("Computing conditioning latents .....")
             gpt_cond_latent, speaker_embedding = self.XTTS_MODEL.get_conditioning_latents(
                 audio_path=speaker_audio_file,
                 gpt_cond_len=self.XTTS_MODEL.config.gpt_cond_len,
@@ -174,7 +200,12 @@ class ViXTTS_custom:
         out_path = os.path.join(self.OUTPUT_DIR, f"{get_file_name(tts_text)}_{gr_audio_id}.wav")
         logger.info(f"Saving output to {out_path}")
         torchaudio.save(out_path, out_wav, 24000)
-
-        return out_path
+        audio_background_path = os.path.join(self.AUDIO_BACKGROUND_DIR, audio_background)
+        wind_backgroud = AudioSegment.from_file(audio_background_path)
+        voice = AudioSegment.from_file(out_path)
+        final_audio = voice.overlay(wind_backgroud)
+        final_path = os.path.join(self.OUTPUT_DIR, f"{get_file_name(tts_text)}_{gr_audio_id}_final.wav")
+        final_audio.export(final_path, format='wav')
+        return final_path
 
 vixtts_custom = ViXTTS_custom()

@@ -18,7 +18,6 @@ async def load_model():
     """
     Load the TTS model.
     """
-    logger.info("Loading model...")
     if not vixtts_custom.XTTS_MODEL:
         async for message in vixtts_custom.init_and_load_model():
             logger.info(message)
@@ -37,9 +36,11 @@ async def text_to_speech(item: Text2SpeechRequest):
         logger.info("Starting inference...")
         audio_file = await vixtts_custom.inference(
             input_text=item.input_text,
+            sex=item.sex,
+            emotion=item.emotion,
             normalize_text=item.normalize_text,
             use_filter=item.verbose,
-            speaker_audio_file=item.reference_audio,
+            audio_background=item.audio_background,
         )
         logger.info(f"Ended inference in {time.time() - start_time:.2f} seconds")
         return {"audio_file": audio_file}

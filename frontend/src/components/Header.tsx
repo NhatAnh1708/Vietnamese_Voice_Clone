@@ -3,6 +3,7 @@ import { BellIcon, ChevronDownIcon, UserCircleIcon, Bars3Icon } from '@heroicons
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import ProfileDropdown from './ProfileDropdown';
 
 interface HeaderProps {
   isSmallScreen: boolean;
@@ -163,21 +164,7 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
           </button>
 
           {showProfileMenu && (
-            <div className={`absolute right-0 top-full mt-2 w-48 rounded-md shadow-lg border z-10 ${
-              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <div className="py-1">
-                <a href="#" className={`block px-4 py-2 text-sm ${
-                  darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                }`}>{translations.myProfile}</a>
-                <a href="#" className={`block px-4 py-2 text-sm ${
-                  darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                }`}>{translations.settings}</a>
-                <a href="#" className={`block px-4 py-2 text-sm ${
-                  darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                }`}>{translations.signOut}</a>
-              </div>
-            </div>
+            <ProfileDropdown />
           )}
         </div>
       </div>

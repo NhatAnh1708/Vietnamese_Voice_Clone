@@ -12,9 +12,13 @@ import CustomDropdown from './CustomDropdown';
 interface RightNavProps {
   isCompact: boolean; // Truyền vào từ component cha để xác định hiển thị gọn hay đầy đủ
   disabled?: boolean;
+  voice: string;
+  setVoice: (v: string) => void;
+  emotion: string;
+  setEmotion: (e: string) => void;
 }
 
-export default function RightNav({ isCompact, disabled = false }: RightNavProps) {
+export default function RightNav({ isCompact, disabled = false, voice, setVoice, emotion, setEmotion }: RightNavProps) {
   const { darkMode } = useTheme();
   const { translations } = useLanguage();
   
@@ -26,9 +30,6 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
     stability: { min: 0.0, max: 1.0, default: 0.8 }
   };
 
-  const [voice, setVoice] = useState(translations.female);
-  const [mood, setMood] = useState(translations.none);
-  
   // Voice options
   const voiceOptions = [translations.female, translations.male];
   
@@ -61,8 +62,6 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
     setAmbientSound(paramRanges.ambientSound.default);
     setSpeed(paramRanges.speed.default);
     setStability(paramRanges.stability.default);
-    setVoice(translations.female);
-    setMood(translations.none);
   };
 
   const [syncing, setSyncing] = useState(false);
@@ -119,9 +118,9 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
             
             <CustomDropdown
               label={translations.emotion}
-              value={mood}
+              value={emotion}
               options={moodOptions}
-              onChange={setMood}
+              onChange={setEmotion}
               compact={true}
               disabled={disabled}
             />
@@ -273,9 +272,9 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
           {/* Mood Selection - Thay select bằng custom dropdown */}
           <CustomDropdown
             label={translations.emotion}
-            value={mood}
+            value={emotion}
             options={moodOptions}
-            onChange={setMood}
+            onChange={setEmotion}
             disabled={disabled}
           />
 
