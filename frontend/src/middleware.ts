@@ -2,22 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const isAuthenticated = request.cookies.get('isAuthenticated');
-  const isLoginPage = request.nextUrl.pathname === '/login';
-
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
   return NextResponse.next();
 }
 
+// Cấu hình matcher để chỉ áp dụng middleware cho một số đường dẫn cụ thể
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|images/|file.svg|globe.svg|next.svg|vercel.svg|window.svg|background.svg|test.jpg).*)",
+    // Match tất cả trừ các thư mục/file tĩnh phổ biến
+    "/((?!api|_next/static|_next/image|favicon.ico|images/|.*\\.svg$|.*\\.jpg$|.*\\.jpeg$|.*\\.png$|.*\\.gif$|.*\\.webp$|.*\\.ico$|.*\\.txt$|.*\\.xml$).*)",
   ],
 }; 

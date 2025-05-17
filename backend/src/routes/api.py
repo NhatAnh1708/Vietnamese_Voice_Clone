@@ -1,11 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from loguru import logger
+from routes.auth import get_production_user
 
 router = APIRouter()
 
 
 @router.get("/health", tags=["Heath check"])
-async def health_check():
+async def health_check(current_user = Depends(get_production_user)):
     """Health check endpoint.
 
     Returns:

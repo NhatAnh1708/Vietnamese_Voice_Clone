@@ -5,3 +5,5 @@ cd ../backend
 cd src
 screen -dmS backend bash -c 'make dev'
 
+
+echo "Frontend and backend started"

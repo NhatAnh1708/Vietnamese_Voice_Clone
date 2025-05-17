@@ -78,6 +78,7 @@ export default function RightNav({ isCompact, disabled = false, voice, setVoice,
       }
       setSyncMessage("Tải model thành công!");
     } catch (error) {
+      console.error("Error syncing model:", error);
       setSyncMessage("Tải model thất bại!");
     } finally {
       setSyncing(false);

@@ -7,14 +7,28 @@ import {
   SunIcon, 
   MoonIcon
 } from '@heroicons/react/24/outline';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function LeftNav() {
   const [activeTab, setActiveTab] = useState('voices');
   const { darkMode, toggleDarkMode } = useTheme();
   const { language, toggleLanguage, translations } = useLanguage();
+  const pathname = usePathname();
+
+  // Set active tab based on pathname
+  useEffect(() => {
+    if (pathname === '/') {
+      setActiveTab('voices');
+    } else if (pathname === '/history') {
+      setActiveTab('history');
+    } else if (pathname === '/documents') {
+      setActiveTab('documents');
+    }
+  }, [pathname]);
 
   return (
     <nav className={`w-64 border-r p-4 flex flex-col h-full ${darkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-800 border-gray-200'}`}>
@@ -22,21 +36,19 @@ export default function LeftNav() {
       <div className="flex-1">
         {/* Navigation Tabs */}
         <div className="space-y-1 mb-6">
-          <button
-            onClick={() => setActiveTab('voices')}
+          <Link href="/"
             className={`flex items-center w-full p-2 rounded-md ${activeTab === 'voices' ? (darkMode ? 'bg-gray-700' : 'bg-gray-100') : (darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50')}`}
           >
             <MicrophoneIcon className={`h-5 w-5 mr-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
             <span className="text-sm">{translations.voices}</span>
-          </button>
+          </Link>
           
-          <button
-            onClick={() => setActiveTab('history')}
+          <Link href="/history"
             className={`flex items-center w-full p-2 rounded-md ${activeTab === 'history' ? (darkMode ? 'bg-gray-700' : 'bg-gray-100') : (darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50')}`}
           >
             <ClockIcon className={`h-5 w-5 mr-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
             <span className="text-sm">{translations.history}</span>
-          </button>
+          </Link>
 
           <button
             onClick={() => setActiveTab('documents')}
@@ -60,7 +72,7 @@ export default function LeftNav() {
           </div>
         )}
         
-        {activeTab === 'history' && (
+        {activeTab === 'history' && pathname !== '/history' && (
           <div className={`border-t pt-4 text-sm ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}`}>
             {translations.historyAppearHere}
           </div>

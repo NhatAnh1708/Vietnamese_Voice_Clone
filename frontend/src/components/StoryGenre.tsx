@@ -1,5 +1,4 @@
 "use client";
-import { useState } from 'react';
 import { BookOpenIcon, FaceSmileIcon, RadioIcon, MoonIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';

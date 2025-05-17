@@ -6,9 +6,10 @@ import RightNav from "@/components/RightNav";
 import StoryGenre from "@/components/StoryGenre";
 import PlayerFooter from "@/components/PlayerFooter";
 import GenerateControls from "@/components/GenerateControls";
-import { PlayIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlayIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useRouter } from 'next/navigation';
 
 // Định nghĩa type cho request text2speech
 interface Text2SpeechRequest {
@@ -22,9 +23,21 @@ interface Text2SpeechRequest {
   audio_background?: string;
 }
 
+// Auth types
+interface LoginRequest {
+  username: string; // email
+  password: string;
+}
+
+interface LoginResponse {
+  access_token: string;
+  token_type: string;
+}
+
 export default function Home() {
-  const { darkMode, toggleDarkMode } = useTheme();
-  const { language, toggleLanguage, translations } = useLanguage();
+  const router = useRouter();
+  const { darkMode } = useTheme();
+  const { language, translations } = useLanguage();
   const [showPlayer, setShowPlayer] = useState(true);
   const [showMiniPlayer, setShowMiniPlayer] = useState(false);
   const [text, setText] = useState("");
@@ -34,6 +47,11 @@ export default function Home() {
   const [voice, setVoice] = useState("Nữ");
   const [emotion, setEmotion] = useState("Truyền Cảm");
   const [selectedGenre, setSelectedGenre] = useState('comedy');
+  
+  // Authentication states
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   
   // Thêm state để xác định kích thước màn hình
   const [screenSize, setScreenSize] = useState({
@@ -51,7 +69,31 @@ export default function Home() {
   };
   const audioBackground = genreToAudioBackground[selectedGenre] || '';
   
+  useEffect(() => {
+    // Check for token in localStorage on component mount
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      setAuthToken(token);
+      setIsAuthenticated(true);
+    } else {
+      // Redirect to login if no token is found
+      router.push('/login');
+    }
+  }, [router]);
+  
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    setAuthToken(null);
+    setIsAuthenticated(false);
+    router.push('/login');
+  };
+  
   const handleGenerate = async () => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    
     setIsLoading(true);
     setAudioUrl(undefined);
     // Chuẩn bị dữ liệu gửi lên backend
@@ -69,12 +111,23 @@ export default function Home() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
         },
         body: JSON.stringify(requestData),
       });
+      
+      if (response.status === 401) {
+        // Unauthorized, token might have expired
+        localStorage.removeItem('auth_token');
+        setIsAuthenticated(false);
+        router.push('/login');
+        return;
+      }
+      
       if (!response.ok) {
         throw new Error("Lỗi khi gọi API text2speech");
       }
+      
       const data = await response.json();
       console.log("Kết quả text2speech:", data);
       // Xử lý kết quả trả về: lấy đường dẫn file audio và build url public
@@ -82,7 +135,39 @@ export default function Home() {
         // Nếu backend trả về đường dẫn tuyệt đối, chỉ lấy tên file
         const filename = data.audio_file.split("/").pop();
         // Giả sử backend phục vụ file qua endpoint /api/audio/{filename}
-        setAudioUrl(`http://localhost:8000/api/audio/${filename}`);
+        const audioUrl = `http://localhost:8000/api/audio/${filename}`;
+        setAudioUrl(audioUrl);
+        
+        // Save to history
+        try {
+          const historyData = {
+            text: text,
+            audio_url: audioUrl,
+            settings: {
+              language: language,
+              voice: voice,
+              emotion: emotion,
+              genre: selectedGenre
+            }
+          };
+          
+          const historyResponse = await fetch("http://localhost:8000/api/auth/speech-history", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${authToken}`
+            },
+            body: JSON.stringify(historyData),
+          });
+          
+          if (historyResponse.ok) {
+            console.log("Saved to history successfully");
+          } else {
+            console.error("Failed to save to history");
+          }
+        } catch (historyError) {
+          console.error("Error saving to history:", historyError);
+        }
       } else {
         setAudioUrl(undefined);
       }
@@ -127,12 +212,19 @@ export default function Home() {
     };
   }, []);
   
+  // If not authenticated, show nothing while redirecting
+  if (!isAuthenticated) {
+    return null;
+  }
+  
   return (
     <div className={`flex flex-col h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <Header 
         isSmallScreen={screenSize.isSmall || screenSize.isMedium} 
         onToggleLeftNav={toggleMobileLeftNav}
         showMobileLeftNav={showMobileLeftNav}
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
       />
       
       <div className="flex flex-1 overflow-hidden relative">

@@ -9,6 +9,7 @@ interface CustomDropdownProps {
   onChange: (value: string) => void;
   label?: string;
   compact?: boolean;
+  disabled?: boolean;
 }
 
 export default function CustomDropdown({ 
@@ -16,7 +17,8 @@ export default function CustomDropdown({
   value, 
   onChange, 
   label, 
-  compact = false 
+  compact = false,
+  disabled = false
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { darkMode } = useTheme();
@@ -52,15 +54,16 @@ export default function CustomDropdown({
       
       {/* Button giả lập select */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between border rounded-md ${
           compact ? 'pl-2 pr-7 py-1 text-xs' : 'pl-3 pr-10 py-2 text-sm'
         } ${
           darkMode 
             ? 'bg-gray-800 border-gray-600 text-white hover:bg-gray-700' 
             : 'bg-white border-gray-300 text-gray-800 hover:bg-gray-50'
-        }`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         type="button"
+        disabled={disabled}
       >
         <span>{value}</span>
         <ChevronDownIcon className={`${

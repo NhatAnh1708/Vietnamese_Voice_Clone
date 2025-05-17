@@ -63,12 +63,6 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
     updateProgressFromClick(e.clientX);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDraggingRef.current) {
-      updateProgressFromClick(e.clientX);
-    }
-  };
-
   const handleMouseUp = () => {
     isDraggingRef.current = false;
   };
@@ -78,13 +72,19 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
     updateProgressFromClick(e.touches[0].clientX);
   };
 
-  const handleTouchMove = (e: TouchEvent) => {
-    if (isDraggingRef.current && e.touches[0]) {
-      updateProgressFromClick(e.touches[0].clientX);
-    }
-  };
-
   useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingRef.current) {
+        updateProgressFromClick(e.clientX);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDraggingRef.current && e.touches[0]) {
+        updateProgressFromClick(e.touches[0].clientX);
+      }
+    };
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('touchmove', handleTouchMove);
