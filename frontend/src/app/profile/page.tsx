@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
+import { getApiUrl, API_ENDPOINTS } from '@/utils/api';
 import { useLanguage } from '@/context/LanguageContext';
 import Header from '@/components/Header';
 
@@ -39,7 +40,7 @@ export default function ProfilePage() {
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:8000/api/auth/user', {
+        const response = await fetch(getApiUrl(API_ENDPOINTS.user), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -91,7 +92,7 @@ export default function ProfilePage() {
         return;
       }
       
-      const response = await fetch(`http://localhost:8000/api/auth/update-profile`, {
+      const response = await fetch(getApiUrl(API_ENDPOINTS.updateProfile), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

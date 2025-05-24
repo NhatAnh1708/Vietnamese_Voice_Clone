@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
+import { getApiUrl, API_ENDPOINTS } from '@/utils/api';
 import { useLanguage } from '@/context/LanguageContext';
 import Header from '@/components/Header';
 import { PlayIcon, PauseIcon, TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
@@ -13,9 +14,16 @@ interface HistoryEntry {
   audio_url: string;
   settings: {
     language: string;
-    voice: string;
+    voice_name?: string;
+    voice?: string;
     emotion: string;
     genre: string;
+    background_audio?: string;
+    advanced_config?: boolean;
+    pitch?: number;
+    speed?: number;
+    stability?: number;
+    ambient_sound?: number;
   };
   created_at: string;
 }
@@ -79,7 +87,7 @@ export default function HistoryPage() {
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/auth/speech-history', {
+      const response = await fetch(getApiUrl(API_ENDPOINTS.speechHistory), {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -203,7 +211,7 @@ export default function HistoryPage() {
 
   const deleteHistoryEntry = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/auth/speech-history/${id}`, {
+      const response = await fetch(getApiUrl(`${API_ENDPOINTS.speechHistory}/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -217,6 +225,11 @@ export default function HistoryPage() {
     } catch (error) {
       console.error('Error deleting history entry:', error);
     }
+  };
+
+  // Helper to get the correct voice name from the entry
+  const getVoiceName = (entry: HistoryEntry): string => {
+    return entry.settings.voice_name || entry.settings.voice || '';
   };
 
   if (!isAuthenticated) {
@@ -280,9 +293,7 @@ export default function HistoryPage() {
                     
                     <div className="flex flex-wrap gap-2 mt-2">
                       <span className={`px-2 py-1 rounded-full text-xs ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                        {entry.settings.voice === 'male' ? 
-                          (language === 'en' ? 'Male' : 'Nam') : 
-                          (language === 'en' ? 'Female' : 'Nữ')}
+                        {getVoiceName(entry)}
                       </span>
                       <span className={`px-2 py-1 rounded-full text-xs ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                         {entry.settings.emotion}
@@ -290,6 +301,16 @@ export default function HistoryPage() {
                       {entry.settings.genre && (
                         <span className={`px-2 py-1 rounded-full text-xs ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                           {entry.settings.genre}
+                        </span>
+                      )}
+                      {entry.settings.background_audio && (
+                        <span className={`px-2 py-1 rounded-full text-xs ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                          {entry.settings.background_audio.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                      {entry.settings.advanced_config && (
+                        <span className={`px-2 py-1 rounded-full text-xs ${darkMode ? 'bg-blue-600' : 'bg-blue-100 text-blue-800'}`}>
+                          {language === 'en' ? 'Advanced' : 'Nâng cao'}
                         </span>
                       )}
                     </div>
@@ -332,4 +353,4 @@ export default function HistoryPage() {
       </div>
     </div>
   );
-} 
+}

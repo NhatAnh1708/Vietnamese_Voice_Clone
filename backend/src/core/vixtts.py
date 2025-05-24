@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 import subprocess
+import librosa
 from typing import Dict, List, Tuple, Optional, Any, AsyncGenerator
 
 from huggingface_hub import hf_hub_download, snapshot_download
@@ -19,6 +20,7 @@ class ViXTTS:
     
     def __init__(
         self,
+        input_voice_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio_voice_input"),
         checkpoint_dir: str = "model_registry",
         repo_id: str = "capleaf/viXTTS",
         tts_language: str = "vi",
@@ -36,6 +38,7 @@ class ViXTTS:
         """
         # Model and directories
         self._model = None
+        self._input_voice_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio_voice_input")
         self._script_dir = os.path.dirname(os.path.abspath(__file__))
         self._audio_background_dir = os.path.join(self._script_dir, "audio_background")
         self._output_dir = os.path.join(self._script_dir, "output")
@@ -135,36 +138,25 @@ class ViXTTS:
 
         yield "Model Loaded!"
 
-    def _find_speaker_audio_file(self, sex: str, emotion: str) -> str:
+    def _find_speaker_audio_file(self, voice_name: str) -> str:
         """Find speaker audio file based on sex and emotion.
         
         Args:
-            sex: Speaker sex/gender ("male"/"female" or equivalents)
-            emotion: Desired emotion for speech
+            voice_name: Speaker name
             
         Returns:
             Path to the speaker audio file
         """
         # Normalize sex parameter
-        if sex.lower() in ["male", "nam", "male"]:
-            sex = "nam"
-        elif sex.lower() in ["female", "nữ", "female"]:
-            sex = "nu"
-            
-        # Normalize emotion parameter
-        if emotion.lower() in ["vui vẻ", "happy"]:
-            emotion = "nhanh"
-        elif emotion.lower() in ["buồn bã", "sad"]:
-            emotion = "cham"
-        elif emotion.lower() in ["tự tin", "confident", "truyền cảm"]:
-            if sex == "nam":
-                emotion = "truyen-cam"
-            else:
-                emotion = "luu-loat"
-        elif emotion.lower() in ["nhút nhát", "shy"]:
-            emotion = "calm"
-            
-        return os.path.join(self._checkpoint_dir, "samples", f"{sex}-{emotion}.wav")
+        if voice_name == "nguyen-ngoc-ngan":
+            return os.path.join(self._input_voice_path, "nguyen-ngoc-ngan.wav")
+        if voice_name == "dinh-soan" or voice_name == "đinh-soan":
+            return os.path.join(self._input_voice_path, "dinh-soan.wav")
+        if voice_name == "bao-linh":
+            return os.path.join(self._input_voice_path, "bao-linh.wav")
+        if voice_name == "hong-nhung":
+            return os.path.join(self._input_voice_path, "hong-nhung.wav")
+        return None
 
     def _apply_deep_filter(self, audio_path: str) -> str:
         """Apply deepFilter to an audio file.
@@ -268,7 +260,11 @@ class ViXTTS:
         self, 
         text: str, 
         gpt_cond_latent: Any, 
-        speaker_embedding: Any
+        speaker_embedding: Any,
+        pitch: float = 0.0,
+        speed: float = 0.0,
+        stability: float = 0.0,
+        use_parameters: bool = False
     ) -> torch.Tensor:
         """Generate speech for the given text.
         
@@ -276,7 +272,10 @@ class ViXTTS:
             text: Text to synthesize
             gpt_cond_latent: GPT conditioning latent
             speaker_embedding: Speaker embedding
-            
+            pitch: Voice pitch adjustment (-1.0 to 1.0)
+            speed: Voice speed adjustment (0.5 to 2.0)
+            stability: Voice stability adjustment (0.0 to 1.0)
+            use_parameters: Whether to use advanced parameters
         Returns:
             Generated audio waveform as tensor
         """
@@ -299,7 +298,7 @@ class ViXTTS:
                 gpt_cond_latent=gpt_cond_latent,
                 speaker_embedding=speaker_embedding,
                 # The following values are carefully chosen for viXTTS
-                temperature=0.3,
+                temperature=0.3 * (1 + stability),  # Adjust stability (0.15 to 0.6)
                 length_penalty=1.0,
                 repetition_penalty=10.0,
                 top_k=30,
@@ -311,6 +310,21 @@ class ViXTTS:
             keep_len = calculate_keep_len(sentence, self._tts_language)
             wav_chunk["wav"] = wav_chunk["wav"][:keep_len]
             
+            if use_parameters:
+                logger.info(f"Using parameters: pitch={pitch}, speed={speed}, stability={stability}")
+                # Apply speed adjustment if needed
+                if speed != 1.0:
+                    # Speed adjustment affects the length of the audio
+                    wav_data = wav_chunk["wav"]
+                    wav_data = librosa.effects.time_stretch(wav_data, rate=speed)
+                    wav_chunk["wav"] = wav_data
+                    
+                # Apply pitch adjustment if needed
+                if pitch != 0.0:
+                    wav_data = wav_chunk["wav"]
+                    wav_data = librosa.effects.pitch_shift(wav_data, sr=24000, n_steps=pitch * 12)
+                    wav_chunk["wav"] = wav_data
+                
             wav_chunks.append(torch.tensor(wav_chunk["wav"]))
 
         # Combine all sentence chunks
@@ -336,12 +350,22 @@ class ViXTTS:
             Path to the final processed audio file
         """
         # Save raw synthesized audio
+        logger.debug(f"Background path: {background_path}")
+        if background_path is None or background_path == "":
+            final_path = os.path.join(self._output_dir, f"{output_basename}.wav")
+            torchaudio.save(final_path, audio_waveform, 24000)
+            return final_path
+        if not background_path.endswith(".mp3"):
+            background_path = f"{background_path}.mp3"
         background_file_path = os.path.join(self._audio_background_dir, background_path)
         logger.info(f"Background file path: {background_file_path}")
         out_path = os.path.join(self._output_dir, f"{output_basename}.wav")
         logger.info(f"Saving output to {out_path}")
         torchaudio.save(out_path, audio_waveform, 24000)
-        
+        if "0.mp3" in background_file_path:
+            final_path = os.path.join(self._output_dir, f"{output_basename}.wav")
+            torchaudio.save(final_path, audio_waveform, 24000)
+            return final_path
         # Add background audio
         voice = AudioSegment.from_file(out_path)
         wind_background = AudioSegment.from_file(background_file_path)
@@ -377,7 +401,12 @@ class ViXTTS:
         voice_path: str = "",
         normalize_text: bool = True,
         use_filter: bool = True,
-        audio_background: str = None
+        audio_background: str = None,
+        pitch: float = 0.0,
+        speed: float = 0.0,
+        stability: float = 0.0,
+        ambient_sound: str = "",
+        use_parameters: bool = False
     ) -> str:
         """Convert text to speech using ViXTTS model with a specific voice.
         
@@ -387,7 +416,11 @@ class ViXTTS:
             normalize_text: Whether to normalize Vietnamese text
             use_filter: Whether to use deepFilter
             audio_background: Background audio to mix with speech
-            
+            pitch: Voice pitch adjustment (-1.0 to 1.0)
+            speed: Voice speed adjustment (0.5 to 2.0)
+            stability: Voice stability adjustment (0.0 to 1.0)
+            ambient_sound: Alternative background sound (takes precedence over audio_background)
+            use_parameters: Whether to use advanced parameters
         Returns:
             Path to the generated audio file
         """
@@ -402,10 +435,9 @@ class ViXTTS:
         self._speaker_reference_audio = voice_path
         logger.debug(f"Speaker audio key: {self._speaker_reference_audio}")
         self._add_to_cache_queue(voice_path)
-        
         # Apply filter if needed
         if use_filter:
-            voice_path = self._apply_deep_filter(voice_path)
+            voice_path = self._apply_deep_filter(self._speaker_reference_audio)
         
         logger.debug(f"Speaker audio file: {voice_path}")
         
@@ -415,36 +447,52 @@ class ViXTTS:
         # Process text
         tts_text = self._prepare_text(input_text, normalize_text)
         
-        # Generate speech
-        out_wav = self._generate_speech_for_text(tts_text, gpt_cond_latent, speaker_embedding)
+        # Generate speech with advanced parameters
+        out_wav = self._generate_speech_for_text(
+            tts_text, 
+            gpt_cond_latent, 
+            speaker_embedding,
+            pitch=pitch,
+            speed=speed,
+            stability=stability,
+            use_parameters=use_parameters
+        )
         
         # Build output filename
         gr_audio_id = os.path.basename(os.path.dirname(voice_path))
         output_basename = f"{get_file_name(tts_text)}_{gr_audio_id}"
         
-        # Process with background audio
-        background_path = audio_background or os.path.join(self._audio_background_dir, voice_path)
-        return self._process_audio_with_background(out_wav, output_basename, background_path)
+        # Use ambient_sound if provided, otherwise use audio_background
+        background = ambient_sound if ambient_sound else audio_background
+        
+        return self._process_audio_with_background(out_wav, output_basename, background)
 
     async def inference(
         self,
         input_text: str = "",
-        sex: str = "nam",
-        emotion: str = "truyen-cam",
+        voice_name: str = "nguyen-ngoc-ngan",
         normalize_text: bool = True,
         use_filter: bool = True,
         audio_background: str = "",
+        pitch: float = 0.0,
+        speed: float = 0.0,
+        stability: float = 0.0,
+        ambient_sound: str = "",
+        use_parameters: bool = False
     ) -> str:
         """Convert text to speech using predefined voice characteristics.
         
         Args:
             input_text: Text to convert to speech
-            sex: Speaker gender/sex
-            emotion: Emotional tone for speech
+            voice_name: Name of the predefined voice
             normalize_text: Whether to normalize Vietnamese text
             use_filter: Whether to use deepFilter
             audio_background: Background audio file to mix with speech
-            
+            pitch: Voice pitch adjustment (-1.0 to 1.0)
+            speed: Voice speed adjustment (0.5 to 2.0)
+            stability: Voice stability adjustment (0.0 to 1.0)
+            ambient_sound: Alternative background sound (takes precedence over audio_background)
+            use_parameters: Whether to use advanced parameters
         Returns:
             Path to the generated audio file
         """
@@ -454,7 +502,7 @@ class ViXTTS:
             raise ValueError("Input text is empty.")
             
         # Find appropriate speaker audio file
-        speaker_audio_file = self._find_speaker_audio_file(sex, emotion)
+        speaker_audio_file = self._find_speaker_audio_file(voice_name)
         self._speaker_reference_audio = speaker_audio_file
         
         # Use the voice path inference method with found speaker file
@@ -463,7 +511,12 @@ class ViXTTS:
             voice_path=speaker_audio_file,
             normalize_text=normalize_text,
             use_filter=use_filter,
-            audio_background=audio_background
+            audio_background=audio_background,
+            pitch=pitch,
+            speed=speed,
+            stability=stability,
+            ambient_sound=ambient_sound,
+            use_parameters=use_parameters
         )
 
 # Create an instance for global use

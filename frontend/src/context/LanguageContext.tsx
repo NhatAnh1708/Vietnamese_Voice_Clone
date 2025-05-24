@@ -20,6 +20,7 @@ const translationMap: Record<Language, Record<string, string>> = {
     "documents": "Documents",
     "addVoice": "Add Voice",
     "recordOrUpload": "Record your voice or upload files",
+    "voiceUploaded": "Voice Uploaded",
     "historyAppearHere": "Your history will appear here",
     "documentsAppearHere": "Your documents will appear here",
     
@@ -39,6 +40,7 @@ const translationMap: Record<Language, Record<string, string>> = {
     "comedy": "Comedy",
     "podcast": "Podcast",
     "horror": "Horror",
+    "backgroundAudio": "Background Audio",
     
     // Generate Controls
     "creditsRemaining": "credits remaining",
@@ -67,10 +69,20 @@ const translationMap: Record<Language, Record<string, string>> = {
     "variable": "Variable",
     "stable": "Stable",
     "defaultSettings": "Default Settings",
+    "advancedConfiguration": "Advanced Configuration",
+    "syncModel": "Sync Model",
+    "loadingModel": "Loading model...",
+    "emotionDisabledNote": "Emotion mode is disabled when using advanced configuration",
     
     // Player
     "currentAudio": "Current audio",
-    "processingText": "Processing your text"
+    "processingText": "Processing your text",
+    
+    // Notifications
+    "apiError": "Error",
+    "apiSuccess": "Success",
+    "speechGenerationSuccess": "Speech generated successfully!",
+    "speechGenerationError": "Failed to generate speech. Please try again."
   },
   vi: {
     // Navigation
@@ -79,6 +91,7 @@ const translationMap: Record<Language, Record<string, string>> = {
     "documents": "Tài liệu",
     "addVoice": "Thêm giọng nói",
     "recordOrUpload": "Ghi âm hoặc tải lên tệp",
+    "voiceUploaded": "Giọng nói đã được thêm",
     "historyAppearHere": "Lịch sử của bạn sẽ xuất hiện ở đây",
     "documentsAppearHere": "Tài liệu của bạn sẽ xuất hiện ở đây",
     
@@ -98,6 +111,7 @@ const translationMap: Record<Language, Record<string, string>> = {
     "comedy": "Truyện hài",
     "podcast": "Podcast",
     "horror": "Kinh dị",
+    "backgroundAudio": "Âm thanh nền",
     
     // Generate Controls
     "creditsRemaining": "tín dụng còn lại",
@@ -126,10 +140,20 @@ const translationMap: Record<Language, Record<string, string>> = {
     "variable": "Thay đổi",
     "stable": "Ổn định",
     "defaultSettings": "Cài đặt mặc định",
+    "advancedConfiguration": "Cấu hình nâng cao",
+    "syncModel": "Đồng bộ model",
+    "loadingModel": "Đang tải model...",
+    "emotionDisabledNote": "Chế độ cảm xúc bị vô hiệu hóa khi sử dụng cấu hình nâng cao",
     
     // Player
     "currentAudio": "Âm thanh hiện tại",
-    "processingText": "Đang xử lý văn bản"
+    "processingText": "Đang xử lý văn bản",
+    
+    // Notifications
+    "apiError": "Lỗi",
+    "apiSuccess": "Thành công",
+    "speechGenerationSuccess": "Tạo giọng nói thành công!",
+    "speechGenerationError": "Không thể tạo giọng nói. Vui lòng thử lại."
   }
 };
 

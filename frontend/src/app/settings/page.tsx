@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/context/ThemeContext';
+import { getApiUrl, API_ENDPOINTS } from '@/utils/api';
 import { useLanguage } from '@/context/LanguageContext';
 import Header from '@/components/Header';
 
@@ -40,7 +41,7 @@ export default function SettingsPage() {
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('http://localhost:8000/api/auth/user', {
+        const response = await fetch(getApiUrl(API_ENDPOINTS.user), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -102,7 +103,7 @@ export default function SettingsPage() {
         return;
       }
       
-      const response = await fetch(`http://localhost:8000/api/auth/change-password`, {
+      const response = await fetch(getApiUrl(API_ENDPOINTS.changePassword), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

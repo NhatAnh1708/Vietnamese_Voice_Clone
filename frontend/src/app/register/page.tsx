@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { getApiUrl, API_ENDPOINTS } from '../../utils/api';
 
 function generateCaptcha() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -37,21 +38,18 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     
-    // Validate captcha
     if (captchaInput !== captcha) {
-      setError('Captcha is incorrect');
+      setError('Invalid captcha. Please try again.');
       setCaptcha(generateCaptcha());
       setCaptchaInput('');
       return;
     }
     
-    // Validate password match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
     
-    // Validate password strength
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
       return;
@@ -60,8 +58,8 @@ export default function RegisterPage() {
     setIsLoading(true);
     
     try {
-      // Connect to the FastAPI backend for registration
-      const response = await fetch("http://localhost:8000/api/auth/register", {
+      // Connect to the FastAPI backend for registration using API utility
+      const response = await fetch(getApiUrl(API_ENDPOINTS.register), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

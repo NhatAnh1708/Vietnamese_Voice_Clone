@@ -38,4 +38,7 @@ dependencies = [
     "jose>=1.0.0",
     "crypto>=1.4.1",
     "pyjwt>=2.10.1",
+    "google-auth>=2.40.2",
+    "google-auth-httplib2>=0.2.0",
+    "google-api-python-client>=2.169.0",
 ]

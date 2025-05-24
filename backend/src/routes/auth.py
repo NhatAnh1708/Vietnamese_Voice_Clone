@@ -8,12 +8,16 @@ from pydantic import BaseModel, EmailStr, Field
 from bson.objectid import ObjectId
 from db.mongo_client import db
 import os
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import httpx
 
 # JWT and password configuration
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', "default_secret_key_for_development")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
 PRODUCTION_MODE = os.environ.get('PRODUCTION_MODE', 'false').lower() == 'true'
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '990510508408-obseipr918cl1fr9crfbubqmqtnlgpp4.apps.googleusercontent.com')
 
 # Models
 class UserBase(BaseModel):
@@ -53,6 +57,9 @@ class UpdateProfileRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+class GoogleToken(BaseModel):
+    token: str
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -274,4 +281,121 @@ async def delete_speech_history_entry(history_id: str, current_user = Depends(ge
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid history ID"
+        )
+
+@router.post("/google-login", response_model=Token)
+async def google_login(google_token: GoogleToken):
+    try:
+        auth_code = google_token.token
+        print(f"Received auth code: {auth_code[:10]}... (length: {len(auth_code)})")
+        
+        client_id = GOOGLE_CLIENT_ID
+        client_secret = "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"
+        redirect_uri = "http://localhost:3000/api/auth/google-redirect"
+        
+        # Simple validation
+        if not auth_code or len(auth_code) < 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid authorization code"
+            )
+
+        print(f"Using client_id: {client_id}")
+        print(f"Using client_secret: {client_secret[:5]}...")
+        print(f"Using redirect_uri: {redirect_uri}")
+        
+        # Exchange code for tokens using httpx with explicit form data
+        token_url = "https://oauth2.googleapis.com/token"
+        
+        # Create form data to send to Google
+        form_data = {
+            "code": auth_code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code"
+        }
+        
+        print("Sending form data to Google:", form_data)
+        
+        # Make request to Google token endpoint
+        async with httpx.AsyncClient() as client:
+            response = await client.post(token_url, data=form_data)
+            print(f"Google token response status: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"Google token error: {response.text}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Failed to exchange code: {response.text}"
+                )
+            
+            token_data = response.json()
+            access_token = token_data.get("access_token")
+            id_token_jwt = token_data.get("id_token")
+            
+            if not access_token or not id_token_jwt:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Missing tokens in response"
+                )
+            
+            print("Received tokens from Google, fetching user info")
+            
+            # Use access token to get user info
+            userinfo_url = f"https://www.googleapis.com/oauth2/v1/userinfo?access_token={access_token}"
+            userinfo_response = await client.get(userinfo_url)
+            
+            if userinfo_response.status_code != 200:
+                print(f"Failed to get user info: {userinfo_response.text}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Failed to get user info"
+                )
+            
+            user_info = userinfo_response.json()
+            email = user_info.get("email")
+            name = user_info.get("name", "")
+            google_id = user_info.get("id")
+            
+            if not email:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Email not found in user info"
+                )
+            
+            print(f"User authenticated: {email}")
+        
+        # Check if user exists
+        user = db.users.find_one({"email": email})
+        
+        if not user:
+            print(f"Creating new user for: {email}")
+            # Create new user if doesn't exist
+            user_dict = {
+                "email": email,
+                "name": name,
+                "created_at": datetime.utcnow(),
+                "google_id": google_id
+            }
+            result = db.users.insert_one(user_dict)
+            user = db.users.find_one({"_id": result.inserted_id})
+        else:
+            print(f"Existing user found: {email}")
+
+        # Create access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"user_id": str(user["_id"])},
+            expires_delta=access_token_expires
+        )
+        print(f"Access token created for: {email}")
+
+        return {"access_token": access_token, "token_type": "bearer"}
+
+    except Exception as e:
+        print(f"Google login error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
         )

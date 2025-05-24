@@ -3,8 +3,13 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '@/context/ThemeContext';
 
+interface OptionItem {
+  id: string;
+  name: string;
+}
+
 interface CustomDropdownProps {
-  options: string[];
+  options: string[] | OptionItem[];
   value: string;
   onChange: (value: string) => void;
   label?: string;
@@ -24,6 +29,16 @@ export default function CustomDropdown({
   const { darkMode } = useTheme();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Get display name for current value
+  const getDisplayName = (val: string) => {
+    if (typeof options[0] === 'string') {
+      return val;
+    }
+    
+    const option = (options as OptionItem[]).find(opt => opt.id === val);
+    return option ? option.name : val;
+  };
+
   // Đóng dropdown khi click bên ngoài
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -39,8 +54,12 @@ export default function CustomDropdown({
   }, []);
 
   // Xử lý chọn option
-  const handleSelect = (option: string) => {
-    onChange(option);
+  const handleSelect = (option: string | OptionItem) => {
+    if (typeof option === 'string') {
+      onChange(option);
+    } else {
+      onChange(option.id);
+    }
     setIsOpen(false);
   };
 
@@ -65,7 +84,7 @@ export default function CustomDropdown({
         type="button"
         disabled={disabled}
       >
-        <span>{value}</span>
+        <span>{getDisplayName(value)}</span>
         <ChevronDownIcon className={`${
           compact ? 'h-4 w-4' : 'h-5 w-5'
         } transition-transform ${
@@ -83,25 +102,30 @@ export default function CustomDropdown({
             : 'bg-white border-gray-200'
         }`}>
           <ul className="max-h-60 overflow-auto py-1">
-            {options.map((option) => (
-              <li 
-                key={option}
-                onClick={() => handleSelect(option)}
-                className={`px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} cursor-pointer ${
-                  value === option
-                    ? darkMode
-                      ? 'bg-gray-700 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                    : ''
-                } ${
-                  darkMode
-                    ? 'text-gray-200 hover:bg-gray-700'
-                    : 'text-gray-800 hover:bg-gray-100'
-                }`}
-              >
-                {option}
-              </li>
-            ))}
+            {options.map((option) => {
+              const optionId = typeof option === 'string' ? option : option.id;
+              const optionName = typeof option === 'string' ? option : option.name;
+              
+              return (
+                <li 
+                  key={optionId}
+                  onClick={() => handleSelect(option)}
+                  className={`px-3 py-2 ${compact ? 'text-xs' : 'text-sm'} cursor-pointer ${
+                    value === optionId
+                      ? darkMode
+                        ? 'bg-gray-700 text-white'
+                        : 'bg-gray-100 text-gray-900'
+                      : ''
+                  } ${
+                    darkMode
+                      ? 'text-gray-200 hover:bg-gray-700'
+                      : 'text-gray-800 hover:bg-gray-100'
+                  }`}
+                >
+                  {optionName}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

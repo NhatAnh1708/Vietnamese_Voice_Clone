@@ -34,6 +34,11 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   
+  // Debug log for audioUrl prop
+  useEffect(() => {
+    console.log('PlayerFooter received audioUrl:', audioUrl);
+  }, [audioUrl]);
+  
   // Effect để lấy kích thước cửa sổ an toàn (client-side only)
   useEffect(() => {
     // Chỉ chạy trên client-side

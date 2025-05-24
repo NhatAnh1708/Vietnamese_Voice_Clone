@@ -1,8 +1,11 @@
 'use client';
 import { BellIcon, ChevronDownIcon, UserCircleIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useNotification, Notification } from '@/context/NotificationContext';
+import { getApiUrl, API_ENDPOINTS } from '@/utils/api';
 import Link from 'next/link';
 
 interface HeaderProps {
@@ -25,13 +28,10 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
   const { darkMode } = useTheme();
   const { translations } = useLanguage();
   const [userData, setUserData] = useState<UserData | null>(null);
+  const { notifications, hasUnreadNotifications, markAsRead } = useNotification();
 
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-
-  const notifications = [
-    { id: 1, sender: 'System', message: 'Welcome to SYNSERE', read: false }
-  ];
 
   // Fetch user data if authenticated
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
         const token = localStorage.getItem('auth_token');
         if (!token) return;
         
-        const response = await fetch('http://localhost:8000/api/auth/user', {
+        const response = await fetch(getApiUrl(API_ENDPOINTS.user), {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -105,6 +105,35 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
     return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
   };
 
+  // Function to get notification icon based on type
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      case 'error':
+        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+      case 'info':
+      default:
+        return <InformationCircleIcon className="h-5 w-5 text-blue-500" />;
+    }
+  };
+
+  // Handle clicking on a notification
+  const handleNotificationClick = (id: string) => {
+    markAsRead(id);
+  };
+
+  // Format date to a readable string
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  };
+
   return (
     <header className={`flex items-center justify-between p-4 border-b ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center">
@@ -141,7 +170,7 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
                 aria-label={translations.notification}
               >
                 <BellIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                {notifications.some(n => !n.read) && (
+                {hasUnreadNotifications && (
                   <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
                 )}
               </button>
@@ -162,17 +191,40 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
                       {translations.notifications}
                     </h3>
                   </div>
-                  <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                    {notifications.map(notification => (
-                      <div key={notification.id} className="p-3">
-                        <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                          {notification.sender}
-                        </p>
-                        <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {notification.message}
+                  
+                  <div className={`max-h-96 overflow-y-auto divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    {notifications.length > 0 ? (
+                      notifications.map(notification => (
+                        <div 
+                          key={notification.id} 
+                          className={`p-3 cursor-pointer ${!notification.read ? (darkMode ? 'bg-gray-700' : 'bg-blue-50') : ''}`}
+                          onClick={() => handleNotificationClick(notification.id)}
+                        >
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                              {getNotificationIcon(notification.type)}
+                            </div>
+                            <div className="ml-3 flex-1">
+                              <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                {notification.title}
+                              </p>
+                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {notification.message}
+                              </p>
+                              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                {formatDate(notification.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          No notifications
                         </p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
@@ -241,7 +293,7 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      Profile
+                      {translations.myProfile}
                     </Link>
                     <Link 
                       href="/settings" 
@@ -251,17 +303,22 @@ export default function Header({ isSmallScreen, onToggleLeftNav, showMobileLeftN
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      Settings
+                      {translations.settings}
                     </Link>
-                    <button
-                      onClick={handleLogout}
+                    <button 
+                      onClick={() => {
+                        if (onLogout) {
+                          onLogout();
+                        }
+                        setShowProfileMenu(false);
+                      }}
                       className={`block w-full text-left px-4 py-2 text-sm ${
                         darkMode 
-                          ? 'text-red-400 hover:bg-gray-700' 
-                          : 'text-red-600 hover:bg-gray-100'
+                          ? 'text-gray-300 hover:bg-gray-700' 
+                          : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      Logout
+                      {translations.signOut || 'Logout'}
                     </button>
                   </>
                 ) : (

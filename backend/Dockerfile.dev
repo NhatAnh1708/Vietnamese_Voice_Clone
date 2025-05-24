@@ -1,0 +1,40 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Update package list and install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libsndfile1 \
+    libsox-fmt-all \
+    sox \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV package manager
+RUN pip install uv
+
+# Copy pyproject.toml and requirements.txt first
+COPY src/pyproject.toml ./
+COPY requirements.txt ./
+
+# Initialize UV and create virtual environment
+RUN uv python install 3.11
+RUN uv venv .venv
+
+# Sync dependencies from pyproject.toml using UV
+RUN uv sync
+
+# Install uvicorn explicitly (more reliable than fastapi-cli)
+RUN uv pip install uvicorn[standard]
+
+# Copy the rest of the application
+COPY . .
+
+# Expose the port the app runs on
+EXPOSE 8000
+
+# Set environment to use UV virtual environment
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Command is specified in docker-compose.yml

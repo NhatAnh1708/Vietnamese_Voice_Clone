@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AudioProvider } from '@/context/AudioContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 import { AuthProvider } from '@/context/AuthContext';
 import './globals.css';
 
@@ -24,9 +25,11 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <LanguageProvider>
-              <AudioProvider>
-                {children}
-              </AudioProvider>
+              <NotificationProvider>
+                <AudioProvider>
+                  {children}
+                </AudioProvider>
+              </NotificationProvider>
             </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
