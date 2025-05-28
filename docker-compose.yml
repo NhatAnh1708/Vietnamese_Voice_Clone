@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # MongoDB service
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  # Backend API service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: tts-backend
+    restart: always
+    ports:
+      - "0.0.0.0:8000:8000"
+    environment:
+      - MONGO_URI=mongodb://admin:password@mongodb:27017/
+      - DB_NAME=synsere_tts
+      - JWT_SECRET_KEY=your_secure_secret_key_change_in_production
+      - GOOGLE_CLIENT_ID=990510508408-obseipr918cl1fr9crfbubqmqtnlgpp4.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - FRONTEND_URL=http://57.155.0.162:3000
+      - EXTERNAL_IP=57.155.0.162
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    working_dir: /app/src
+    command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: tts-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://57.155.0.162:8000
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=990510508408-obseipr918cl1fr9crfbubqmqtnlgpp4.apps.googleusercontent.com
+      - EXTERNAL_IP=57.155.0.162
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    # depends_on:
+    #   - backend
+    networks:
+      - app-network
+    command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+
+# Volume for MongoDB data persistence
+volumes:
+  mongodb_data:
+
+# Network for services communication
+networks:
+  app-network:
+    driver: bridge 

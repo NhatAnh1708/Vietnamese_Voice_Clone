@@ -33,4 +33,12 @@ dependencies = [
     "einops>=0.8.1",
     "matplotlib>=3.10.1",
     "underthesea>=6.8.4",
+    "pymongo>=4.13.0",
+    "passlib>=1.7.4",
+    "jose>=1.0.0",
+    "crypto>=1.4.1",
+    "pyjwt>=2.10.1",
+    "google-auth>=2.40.2",
+    "google-auth-httplib2>=0.2.0",
+    "google-api-python-client>=2.169.0",
 ]

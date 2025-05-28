@@ -61,6 +61,16 @@ cover/
 *.mo
 *.pot
 
+# Mongo
+mongo/data/*
+mongo/*
+
+# Mongo
+mongo/data/*
+mongo/*
+
+mongo/data/*
+mongo/*
 # Django stuff:
 *.log
 local_settings.py

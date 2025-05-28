@@ -4,20 +4,59 @@ import {
   AdjustmentsHorizontalIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from '@/context/ThemeContext';
+import { getApiUrl, API_ENDPOINTS } from '@/utils/api';
 import { useLanguage } from '@/context/LanguageContext';
 import CustomDropdown from './CustomDropdown';
 
 interface RightNavProps {
   isCompact: boolean; // Truyền vào từ component cha để xác định hiển thị gọn hay đầy đủ
   disabled?: boolean;
+  voice: string;
+  setVoice: (v: string) => void;
+  emotion: string;
+  setEmotion: (e: string) => void;
+  useAdvancedConfig: boolean;
+  setUseAdvancedConfig: (use: boolean) => void;
+  pitch: number;
+  setPitch: (p: number) => void;
+  speed: number;
+  setSpeed: (s: number) => void;
+  stability: number;
+  setStability: (s: number) => void;
+  ambientSound: number;
+  setAmbientSound: (a: number) => void;
+  hasCustomVoice?: boolean;
 }
 
-export default function RightNav({ isCompact, disabled = false }: RightNavProps) {
+export default function RightNav({ 
+  isCompact, 
+  disabled = false, 
+  voice, 
+  setVoice, 
+  emotion, 
+  setEmotion,
+  useAdvancedConfig,
+  setUseAdvancedConfig,
+  pitch,
+  setPitch,
+  speed,
+  setSpeed,
+  stability,
+  setStability,
+  ambientSound,
+  setAmbientSound,
+  hasCustomVoice = false
+}: RightNavProps) {
   const { darkMode } = useTheme();
-  const { translations } = useLanguage();
+  const { translations, language } = useLanguage();
   
+  // Debug log for hasCustomVoice prop
+  useEffect(() => {
+    console.log('RightNav hasCustomVoice changed:', hasCustomVoice);
+  }, [hasCustomVoice]);
+
   // Define min, max values for each parameter
   const paramRanges = {
     pitch: { min: 0.5, max: 1.5, default: 1.0 },
@@ -26,27 +65,42 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
     stability: { min: 0.0, max: 1.0, default: 0.8 }
   };
 
-  const [voice, setVoice] = useState(translations.female);
-  const [mood, setMood] = useState(translations.none);
-  
-  // Voice options
-  const voiceOptions = [translations.female, translations.male];
+  // Options for voice
+  const voiceOptions = [
+    { 
+      id: 'Đình Soạn',
+      name: 'Đình Soạn',
+    },
+    { 
+      id: 'Nguyễn Ngọc Ngạn', 
+      name: 'Nguyễn Ngọc Ngạn',
+    },
+    {
+      id: 'Hồng Nhung',
+      name: 'Hồng Nhung',
+    },
+    {
+      id: 'Bảo Linh',
+      name: 'Bảo Linh',
+    }
+  ];
   
   // Mood options
   const moodOptions = [
-    translations.none,
-    translations.happy,
-    translations.sad,
-    translations.confident,
-    translations.shy
+    { 
+      id: 'Truyền Cảm', 
+      name: translations['Truyền Cảm'] || 'Truyền Cảm',
+    },
+    { 
+      id: 'Trầm ấm', 
+      name: translations['Trầm ấm'] || 'Trầm ấm',
+    },
+    { 
+      id: 'Vui Vẻ', 
+      name: translations['Vui Vẻ'] || 'Vui Vẻ',
+    },
   ];
   
-  // Use actual parameter values instead of percentages
-  const [pitch, setPitch] = useState(paramRanges.pitch.default);
-  const [ambientSound, setAmbientSound] = useState(paramRanges.ambientSound.default);
-  const [speed, setSpeed] = useState(paramRanges.speed.default);
-  const [stability, setStability] = useState(paramRanges.stability.default);
-
   // Helper functions remain the same
   const toPercent = (value: number, min: number, max: number): string => {
     return ((value - min) / (max - min) * 100).toFixed(0);
@@ -60,30 +114,6 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
     setPitch(paramRanges.pitch.default);
     setAmbientSound(paramRanges.ambientSound.default);
     setSpeed(paramRanges.speed.default);
-    setStability(paramRanges.stability.default);
-    setVoice(translations.female);
-    setMood(translations.none);
-  };
-
-  const [syncing, setSyncing] = useState(false);
-  const [showSyncModal, setShowSyncModal] = useState(false);
-  const [syncMessage, setSyncMessage] = useState("");
-
-  const handleSyncModel = async () => {
-    setSyncing(true);
-    setSyncMessage("");
-    try {
-      const response = await fetch("http://localhost:8000/api/load-model");
-      if (!response.ok) {
-        throw new Error("Lỗi khi sync model");
-      }
-      setSyncMessage("Tải model thành công!");
-    } catch (error) {
-      setSyncMessage("Tải model thất bại!");
-    } finally {
-      setSyncing(false);
-      setShowSyncModal(true);
-    }
   };
 
   // Nếu là chế độ compact (cho màn hình nhỏ), sẽ hiển thị dạng gọn lại
@@ -114,128 +144,139 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
               options={voiceOptions}
               onChange={setVoice}
               compact={true}
-              disabled={disabled}
+              disabled={disabled || hasCustomVoice}
             />
             
             <CustomDropdown
               label={translations.emotion}
-              value={mood}
+              value={emotion}
               options={moodOptions}
-              onChange={setMood}
+              onChange={setEmotion}
               compact={true}
-              disabled={disabled}
+              disabled={disabled || useAdvancedConfig || hasCustomVoice}
             />
           </div>
 
-          {/* Controls in a compact grid */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-            {/* Pitch Control */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className={`text-xs font-medium ${
-                  darkMode ? 'text-gray-200' : 'text-gray-800'
-                }`}>{translations.pitch}</label>
-                <span className={`text-xs ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>{pitch.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
-                onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
-                className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-                disabled={disabled}
-              />
-            </div>
-
-            {/* Speed Control */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className={`text-xs font-medium ${
-                  darkMode ? 'text-gray-200' : 'text-gray-800'
-                }`}>{translations.speed}</label>
-                <span className={`text-xs ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>{speed.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
-                onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
-                className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-                disabled={disabled}
-              />
-            </div>
-
-            {/* Ambient Sound Control */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className={`text-xs font-medium ${
-                  darkMode ? 'text-gray-200' : 'text-gray-800'
-                }`}>{translations.ambientSound}</label>
-                <span className={`text-xs ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>{ambientSound.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
-                onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
-                className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-                disabled={disabled}
-              />
-            </div>
-
-            {/* Stability Control */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className={`text-xs font-medium ${
-                  darkMode ? 'text-gray-200' : 'text-gray-800'
-                }`}>{translations.stability}</label>
-                <span className={`text-xs ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>{stability.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={toPercent(stability, paramRanges.stability.min, paramRanges.stability.max)}
-                onChange={(e) => setStability(fromPercent(parseInt(e.target.value), paramRanges.stability.min, paramRanges.stability.max))}
-                className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-                disabled={disabled}
-              />
-            </div>
+          {/* Checkbox toggle for more configuration */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="advancedConfigToggleCompact"
+              checked={useAdvancedConfig}
+              onChange={() => setUseAdvancedConfig(!useAdvancedConfig)}
+              className={`h-4 w-4 mr-2 rounded border ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-blue-500' 
+                  : 'bg-white border-gray-300 text-blue-600'
+              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={disabled}
+            />
+            <label 
+              htmlFor="advancedConfigToggleCompact" 
+              className={`text-sm font-medium ${
+                darkMode ? 'text-gray-200' : 'text-gray-700'
+              } ${disabled ? 'opacity-50' : ''}`}
+            >
+              {translations.advancedConfiguration}
+            </label>
           </div>
+          
+          {/* Note explaining disabled emotion when advanced config is enabled */}
+          {useAdvancedConfig && (
+            <div className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {translations.emotionDisabledNote}
+            </div>
+          )}
 
-          {/* Reset Button */}
-          <button
-            onClick={resetToDefault}
-            className={`w-full mt-2 flex items-center justify-center py-2 px-3 border rounded-md shadow-sm text-xs ${
-              darkMode 
-                ? 'bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700' 
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-            disabled={disabled}
-          >
-            <ArrowPathIcon className="h-3 w-3 mr-1" />
-            {translations.defaultSettings}
-          </button>
+          {/* Controls in a compact grid - only show if useAdvancedConfig is true */}
+          {useAdvancedConfig && (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {/* Pitch Control */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className={`text-xs font-medium ${
+                    darkMode ? 'text-gray-200' : 'text-gray-800'
+                  } ${disabled ? 'opacity-50' : ''}`}>{translations.pitch}</label>
+                  <span className={`text-xs ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } ${disabled ? 'opacity-50' : ''}`}>{pitch.toFixed(1)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
+                  onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
+                  className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={disabled}
+                />
+              </div>
 
-          {/* Nút Sync Model */}
-          <button
-            onClick={handleSyncModel}
-            disabled={syncing || disabled}
-            className="w-full mt-2 flex items-center justify-center py-2 px-3 rounded-md shadow-sm text-xs bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {syncing ? "Đang tải model..." : "Sync Model"}
-          </button>
+              {/* Speed Control */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-200' : 'text-gray-800'
+                  } ${disabled ? 'opacity-50' : ''}`}>{translations.speed}</label>
+                  <span className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } ${disabled ? 'opacity-50' : ''}`}>{speed.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
+                  onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
+                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={disabled}
+                />
+                <div className={`flex justify-between text-xs mt-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-700'
+                } ${disabled ? 'opacity-50' : ''}`}>
+                  <span>{translations.slower}</span>
+                  <span>{translations.faster}</span>
+                </div>
+              </div>
+
+              {/* Ambient Sound Control */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className={`text-xs font-medium ${
+                    darkMode ? 'text-gray-200' : 'text-gray-800'
+                  } ${disabled ? 'opacity-50' : ''}`}>{translations.ambientSound}</label>
+                  <span className={`text-xs ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } ${disabled ? 'opacity-50' : ''}`}>{ambientSound.toFixed(1)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
+                  onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
+                  className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Reset Button - only show if useAdvancedConfig is true */}
+          {useAdvancedConfig && (
+            <button
+              onClick={resetToDefault}
+              className={`w-full mt-8 flex items-center justify-center py-2.5 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                darkMode 
+                  ? 'bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700' 
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={disabled}
+            >
+              <ArrowPathIcon className="h-4 w-4 mr-2" />
+              {translations.defaultSettings}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -267,148 +308,148 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
             value={voice}
             options={voiceOptions}
             onChange={setVoice}
-            disabled={disabled}
+            disabled={disabled || hasCustomVoice}
           />
 
           {/* Mood Selection - Thay select bằng custom dropdown */}
           <CustomDropdown
             label={translations.emotion}
-            value={mood}
+            value={emotion}
             options={moodOptions}
-            onChange={setMood}
-            disabled={disabled}
+            onChange={setEmotion}
+            disabled={disabled || useAdvancedConfig || hasCustomVoice}
           />
 
-          {/* Pitch Control */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className={`text-sm font-medium ${
-                darkMode ? 'text-gray-200' : 'text-gray-800'
-              }`}>{translations.pitch}</label>
-              <span className={`text-sm font-medium ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>{pitch.toFixed(2)}</span>
-            </div>
+          {/* Checkbox toggle for more configuration */}
+          <div className="flex items-center">
             <input
-              type="range"
-              min="0"
-              max="100"
-              value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
-              onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
-              className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
+              type="checkbox"
+              id="advancedConfigToggle"
+              checked={useAdvancedConfig}
+              onChange={() => setUseAdvancedConfig(!useAdvancedConfig)}
+              className={`h-5 w-5 mr-3 rounded border ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-blue-500' 
+                  : 'bg-white border-gray-300 text-blue-600'
+              } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={disabled}
             />
-            <div className={`flex justify-between text-xs mt-2 ${
-              darkMode ? 'text-gray-400' : 'text-gray-700'
-            }`}>
-              <span>{translations.lower}</span>
-              <span>{translations.higher}</span>
-            </div>
+            <label 
+              htmlFor="advancedConfigToggle" 
+              className={`text-base font-medium ${
+                darkMode ? 'text-gray-200' : 'text-gray-700'
+              } ${disabled ? 'opacity-50' : ''}`}
+            >
+              {translations.advancedConfiguration}
+            </label>
           </div>
+          
+          {/* Note explaining disabled emotion when advanced config is enabled */}
+          {useAdvancedConfig && (
+            <div className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {translations.emotionDisabledNote}
+            </div>
+          )}
 
-          {/* Ambient Sound Control */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className={`text-sm font-medium ${
-                darkMode ? 'text-gray-200' : 'text-gray-800'
-              }`}>{translations.ambientSound}</label>
-              <span className={`text-sm font-medium ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>{ambientSound.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
-              onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
-              className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-              disabled={disabled}
-            />
-            <div className={`flex justify-between text-xs mt-2 ${
-              darkMode ? 'text-gray-400' : 'text-gray-700'
-            }`}>
-              <span>{translations.less}</span>
-              <span>{translations.more}</span>
-            </div>
-          </div>
+          {/* Additional configuration - only show if useAdvancedConfig is true */}
+          {useAdvancedConfig && (
+            <>
+              {/* Pitch Control */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-200' : 'text-gray-800'
+                  } ${disabled ? 'opacity-50' : ''}`}>{translations.pitch}</label>
+                  <span className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } ${disabled ? 'opacity-50' : ''}`}>{pitch.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
+                  onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
+                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={disabled}
+                />
+                <div className={`flex justify-between text-xs mt-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-700'
+                } ${disabled ? 'opacity-50' : ''}`}>
+                  <span>{translations.lower}</span>
+                  <span>{translations.higher}</span>
+                </div>
+              </div>
 
-          {/* Speed Control */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className={`text-sm font-medium ${
-                darkMode ? 'text-gray-200' : 'text-gray-800'
-              }`}>{translations.speed}</label>
-              <span className={`text-sm font-medium ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>{speed.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
-              onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
-              className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-              disabled={disabled}
-            />
-            <div className={`flex justify-between text-xs mt-2 ${
-              darkMode ? 'text-gray-400' : 'text-gray-700'
-            }`}>
-              <span>{translations.slower}</span>
-              <span>{translations.faster}</span>
-            </div>
-          </div>
+              {/* Ambient Sound Control */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-200' : 'text-gray-800'
+                  } ${disabled ? 'opacity-50' : ''}`}>{translations.ambientSound}</label>
+                  <span className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } ${disabled ? 'opacity-50' : ''}`}>{ambientSound.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
+                  onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
+                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={disabled}
+                />
+                <div className={`flex justify-between text-xs mt-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-700'
+                } ${disabled ? 'opacity-50' : ''}`}>
+                  <span>{translations.less}</span>
+                  <span>{translations.more}</span>
+                </div>
+              </div>
 
-          {/* Stability Control */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className={`text-sm font-medium ${
-                darkMode ? 'text-gray-200' : 'text-gray-800'
-              }`}>{translations.stability}</label>
-              <span className={`text-sm font-medium ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>{stability.toFixed(2)}</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={toPercent(stability, paramRanges.stability.min, paramRanges.stability.max)}
-              onChange={(e) => setStability(fromPercent(parseInt(e.target.value), paramRanges.stability.min, paramRanges.stability.max))}
-              className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'}`}
-              disabled={disabled}
-            />
-            <div className={`flex justify-between text-xs mt-2 ${
-              darkMode ? 'text-gray-400' : 'text-gray-700'
-            }`}>
-              <span>{translations.variable}</span>
-              <span>{translations.stable}</span>
-            </div>
-          </div>
+              {/* Speed Control */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-200' : 'text-gray-800'
+                  } ${disabled ? 'opacity-50' : ''}`}>{translations.speed}</label>
+                  <span className={`text-sm font-medium ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } ${disabled ? 'opacity-50' : ''}`}>{speed.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
+                  onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
+                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={disabled}
+                />
+                <div className={`flex justify-between text-xs mt-2 ${
+                  darkMode ? 'text-gray-400' : 'text-gray-700'
+                } ${disabled ? 'opacity-50' : ''}`}>
+                  <span>{translations.slower}</span>
+                  <span>{translations.faster}</span>
+                </div>
+              </div>
 
-          {/* Reset Button */}
-          <button
-            onClick={resetToDefault}
-            className={`w-full mt-8 flex items-center justify-center py-2.5 px-4 border rounded-md shadow-sm text-sm font-medium ${
-              darkMode 
-                ? 'bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700' 
-                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-            disabled={disabled}
-          >
-            <ArrowPathIcon className="h-4 w-4 mr-2" />
-            {translations.defaultSettings}
-          </button>
-
-          {/* Nút Sync Model */}
-          <button
-            onClick={handleSyncModel}
-            disabled={syncing || disabled}
-            className="w-full mt-2 flex items-center justify-center py-2 px-3 rounded-md shadow-sm text-xs bg-black text-white font-semibold hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {syncing ? "Đang tải model..." : "Sync Model"}
-          </button>
+              {/* Reset Button */}
+              <button
+                onClick={resetToDefault}
+                className={`w-full mt-8 flex items-center justify-center py-2.5 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                  darkMode 
+                    ? 'bg-gray-800 border-gray-600 text-gray-200 hover:bg-gray-700' 
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={disabled}
+              >
+                <ArrowPathIcon className="h-4 w-4 mr-2" />
+                {translations.defaultSettings}
+              </button>
+            </>
+          )}
         </div>
       </div>
       
@@ -420,21 +461,6 @@ export default function RightNav({ isCompact, disabled = false }: RightNavProps)
           © 2025 Synsere. All rights reserved.
         </div>
       </div>
-
-      {/* Popup thông báo sync model */}
-      {showSyncModal && (
-        <div className="fixed top-6 right-6 z-50">
-          <div className="bg-white border border-gray-300 rounded-lg shadow-lg px-6 py-4 min-w-[220px] text-center flex flex-col items-center">
-            <div className="mb-2 text-base font-semibold text-gray-800">{syncMessage}</div>
-            <button
-              onClick={() => setShowSyncModal(false)}
-              className="mt-1 px-3 py-1 bg-black text-white rounded hover:bg-gray-800 text-sm"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
