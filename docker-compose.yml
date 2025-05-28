@@ -50,7 +50,7 @@ services:
     container_name: tts-frontend
     restart: always
     ports:
-      - "0.0.0.0:3000:3000"
+      - "3000:3000"
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://57.155.0.162:8000
@@ -60,8 +60,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
-    depends_on:
-      - backend
+    # depends_on:
+    #   - backend
     networks:
       - app-network
     command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]

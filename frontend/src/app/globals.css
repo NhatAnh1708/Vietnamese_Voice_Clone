@@ -68,3 +68,82 @@ textarea:focus {
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* Loading state styles */
+body.loading {
+  cursor: wait;
+}
+
+body.loading * {
+  pointer-events: none;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Disabled state styles */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading progress bar */
+.loading-progress {
+  position: relative;
+  height: 4px;
+  background-color: #f3f3f3;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #3498db;
+  animation: progress 5s linear forwards;
+}
+
+@keyframes progress {
+  0% { width: 100%; }
+  100% { width: 0%; }
+}
+
+/* Animation cho progress bar khi loading */
+.animate-loading-progress {
+  animation: loadingBar 2s linear infinite;
+}
+
+@keyframes loadingBar {
+  0% { left: -100%; width: 100%; }
+  50% { left: 0; width: 100%; }
+  100% { left: 100%; width: 10%; }
+}

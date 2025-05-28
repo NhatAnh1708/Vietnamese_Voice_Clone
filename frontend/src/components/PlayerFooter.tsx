@@ -4,7 +4,6 @@ import {
   PlayIcon,
   PauseIcon,
   ArrowDownTrayIcon,
-  ShareIcon,
   ForwardIcon,
   BackwardIcon
 } from "@heroicons/react/24/outline";
@@ -171,12 +170,20 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
           onMouseDown={handleMouseDown}
           onTouchStart={handleTouchStart}
         >
-          <div 
-            className={`h-full rounded-full absolute top-0 left-0 ${
-              darkMode ? 'bg-gray-300' : 'bg-gray-900'
-            }`}
-            style={{ width: `${progress}%` }}
-          />
+          {isLoading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-2/3 h-1 bg-black rounded-full overflow-hidden">
+                <div className="h-full bg-black animate-pulse rounded-full" style={{ width: '60%' }}></div>
+              </div>
+            </div>
+          ) : (
+            <div 
+              className={`h-full rounded-full absolute top-0 left-0 ${
+                darkMode ? 'bg-gray-300' : 'bg-gray-900'
+              }`}
+              style={{ width: `${progress}%` }}
+            />
+          )}
         </div>
         
         {/* Controls and time */}
@@ -186,7 +193,8 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
             <button
               className={`mr-1 p-1 rounded-full ${
                 darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
             >
               <BackwardIcon className="h-4 w-4" />
             </button>
@@ -195,9 +203,12 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
               onClick={() => setIsPlaying(!isPlaying)}
               className={`p-1 rounded-full ${
                 darkMode ? 'bg-gray-800' : 'bg-gray-100' 
-              }`}
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
             >
-              {isPlaying ? (
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-current" />
+              ) : isPlaying ? (
                 <PauseIcon className={`h-5 w-5 ${
                   darkMode ? 'text-gray-300' : 'text-gray-700'
                 }`} />
@@ -211,7 +222,8 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
             <button
               className={`ml-1 p-1 rounded-full ${
                 darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
             >
               <ForwardIcon className="h-4 w-4" />
             </button>
@@ -252,29 +264,15 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
             />
           )}
           
-          <div className="flex space-x-2">
-            <button className={`p-1 rounded-full ${
+          <button 
+            onClick={onClose}
+            className={`p-1 rounded-full ${
               darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              <ArrowDownTrayIcon className="h-4 w-4" />
-            </button>
-            
-            {/* Thêm nút Share vào phiên bản compact */}
-            <button className={`p-1 rounded-full ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              <ShareIcon className="h-4 w-4" />
-            </button>
-            
-            <button 
-              onClick={onClose}
-              className={`p-1 rounded-full ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}
-            >
-              <XMarkIcon className="h-4 w-4" />
-            </button>
-          </div>
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isLoading}
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
         </div>
       </div>
     );
@@ -303,18 +301,22 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
               {/* Nút lùi 5s */}
               <button
                 onClick={() => seek(currentTime - 5)}
-                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}`}
+                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title="Lùi 5 giây"
+                disabled={isLoading}
               >
                 <BackwardIcon className="h-5 w-5" />
               </button>
               {/* Nút play/pause */}
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className={`mx-2 p-2 rounded-full ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+                className={`mx-2 p-2 rounded-full ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title={isPlaying ? "Tạm dừng" : "Phát"}
+                disabled={isLoading}
               >
-                {isPlaying ? (
+                {isLoading ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-current" />
+                ) : isPlaying ? (
                   <PauseIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
                 ) : (
                   <PlayIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
@@ -323,8 +325,9 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
               {/* Nút tiến 5s */}
               <button
                 onClick={() => seek(currentTime + 5)}
-                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}`}
+                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title="Tiến 5 giây"
+                disabled={isLoading}
               >
                 <ForwardIcon className="h-5 w-5" />
               </button>
@@ -333,13 +336,21 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
                 <div className="flex items-center">
                   <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatTime(currentTime)}</span>
                   <div
-                    className={`relative flex-1 h-2 mx-2 rounded-full cursor-pointer ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                    className={`relative flex-1 h-2 mx-2 rounded-full cursor-pointer ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={handleBarClick}
                   >
-                    <div
-                      className={`absolute top-0 left-0 h-2 rounded-full bg-black`}
-                      style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                    />
+                    {isLoading ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-2/3 h-2 bg-black rounded-full overflow-hidden">
+                          <div className="h-full bg-black animate-pulse rounded-full" style={{ width: '60%' }}></div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`absolute top-0 left-0 h-2 rounded-full bg-black`}
+                        style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                      />
+                    )}
                   </div>
                   <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatTime(duration)}</span>
                 </div>
@@ -357,7 +368,7 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
                 <a
                   href={audioUrl}
                   download
-                  className={`ml-2 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'}`}
+                  className={`ml-2 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                   title="Tải về audio"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -368,8 +379,9 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
               {/* Nút đóng */}
               <button
                 onClick={onClose}
-                className={`ml-4 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'}`}
+                className={`ml-4 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title="Đóng"
+                disabled={isLoading}
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -503,27 +515,6 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
         </div>
         
         <div className="flex space-x-2 ml-2">
-          <button 
-            className={`p-2 rounded-full ${
-              darkMode 
-                ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <ArrowDownTrayIcon className="h-5 w-5" />
-          </button>
-          
-          {/* Bỏ điều kiện !isNarrowMedium để luôn hiển thị nút Share */}
-          <button 
-            className={`p-2 rounded-full ${
-              darkMode 
-                ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <ShareIcon className="h-5 w-5" />
-          </button>
-          
           <button
             onClick={onClose}
             className={`p-2 rounded-full ${

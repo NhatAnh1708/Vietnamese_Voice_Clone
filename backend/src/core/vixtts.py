@@ -168,6 +168,7 @@ class ViXTTS:
             Path to the filtered audio file
         """
         # Check if filtered version is already cached
+        logger.info(f"Audio path debug: {audio_path}")
         if audio_path in self._filter_cache:
             logger.info("Using filter cache...")
             return self._filter_cache[audio_path]
@@ -369,6 +370,14 @@ class ViXTTS:
         # Add background audio
         voice = AudioSegment.from_file(out_path)
         wind_background = AudioSegment.from_file(background_file_path)
+        
+        # Reduce background volume by -10dB (about 50% quieter)
+        wind_background = wind_background - 30
+        
+        # Ensure background is not longer than voice
+        if len(wind_background) > len(voice):
+            wind_background = wind_background[:len(voice)]
+        
         final_audio = voice.overlay(wind_background)
         
         # Save final audio
@@ -503,6 +512,7 @@ class ViXTTS:
             
         # Find appropriate speaker audio file
         speaker_audio_file = self._find_speaker_audio_file(voice_name)
+        logger.debug(f"Speaker audio file DEBUG: {speaker_audio_file}")
         self._speaker_reference_audio = speaker_audio_file
         
         # Use the voice path inference method with found speaker file

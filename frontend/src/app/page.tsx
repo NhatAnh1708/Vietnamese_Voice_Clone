@@ -64,8 +64,10 @@ export default function Home() {
   const [showMobileLeftNav, setShowMobileLeftNav] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [voice, setVoice] = useState("Nguyễn Ngọc Ngạn");
-  const [emotion, setEmotion] = useState("Truyền Cảm");
+  const [isVoiceUploading, setIsVoiceUploading] = useState(false);
+  const [showLoadingIndicator, setShowLoadingIndicator] = useState(false);
+  const [voice, setVoice] = useState("Đình Soạn");
+  const [emotion, setEmotion] = useState('Truyền Cảm');
   const [selectedGenre, setSelectedGenre] = useState('comedy');
   const [selectedBackground, setSelectedBackground] = useState('comedy_audio_1');
   
@@ -216,6 +218,7 @@ export default function Home() {
       const { voicePath, voiceFileName } = event.detail;
       setVoicePath(voicePath);
       setVoiceFileName(voiceFileName);
+      setIsVoiceUploading(false);
       console.log('State updated - voicePath:', voicePath, 'voiceFileName:', voiceFileName);
     };
     
@@ -225,13 +228,21 @@ export default function Home() {
       setVoicePath(null);
       setVoiceFileName(null);
     };
+
+    // Listen for voice upload start
+    const handleVoiceUploadStart = () => {
+      console.log('Voice upload started');
+      setIsVoiceUploading(true);
+    };
     
     window.addEventListener('voiceUploaded', handleVoiceUploaded as EventListener);
     window.addEventListener('voiceRemoved', handleVoiceRemoved as EventListener);
+    window.addEventListener('voiceUploadStart', handleVoiceUploadStart as EventListener);
     
     return () => {
       window.removeEventListener('voiceUploaded', handleVoiceUploaded as EventListener);
       window.removeEventListener('voiceRemoved', handleVoiceRemoved as EventListener);
+      window.removeEventListener('voiceUploadStart', handleVoiceUploadStart as EventListener);
     };
   }, []);
   
@@ -253,7 +264,9 @@ export default function Home() {
       return;
     }
 
+    // Set loading states immediately
     setIsLoading(true);
+    setShowLoadingIndicator(true);
 
     try {
       // Get current auth token
@@ -381,14 +394,13 @@ export default function Home() {
             audio_url: audioUrl,
             settings: {
               language: language,
-              voice_name: voice,  // Store the actual voice name
-              voice_api_name: formatVoiceNameForApi(voice),  // Store the API voice name for reference
+              voice_name: voicePath ? voiceFileName : voice,
+              voice_api_name: voicePath ? voiceFileName : formatVoiceNameForApi(voice),
               emotion: emotion,
               emotion_api_name: formatVoiceNameForApi(emotion),
               genre: selectedGenre,
               background_audio: selectedBackground,
               advanced_config: useAdvancedConfig,
-              // Include the advanced parameters if they're being used
               ...(useAdvancedConfig && {
                 pitch: pitch,
                 speed: speed,
@@ -429,13 +441,19 @@ export default function Home() {
       // Send error to notification system if not already shown
       addNotification('error', translations.apiError, translations.speechGenerationError);
     } finally {
-      setIsLoading(false);
+      // Reset loading states after a short delay to ensure UI updates properly
+      setTimeout(() => {
+        setIsLoading(false);
+        setShowLoadingIndicator(false);
+      }, 500);
     }
   };
 
   // Toggle mobile left nav
   const toggleMobileLeftNav = () => {
-    setShowMobileLeftNav(!showMobileLeftNav);
+    if (!isLoading) {
+      setShowMobileLeftNav(!showMobileLeftNav);
+    }
   };
   
   // Effect để theo dõi sự thay đổi kích thước màn hình
@@ -465,6 +483,40 @@ export default function Home() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Reset loading state when component unmounts
+  useEffect(() => {
+    return () => {
+      setIsLoading(false);
+    };
+  }, []);
+
+  // Effect to handle loading state changes
+  useEffect(() => {
+    const isAnyLoading = isLoading || isVoiceUploading;
+    if (isAnyLoading) {
+      // Disable all interactive elements when loading
+      document.body.style.pointerEvents = 'none';
+      // Add loading class to body
+      document.body.classList.add('loading');
+      // Show loading indicator
+      setShowLoadingIndicator(true);
+    } else {
+      // Re-enable all interactive elements when loading is complete
+      document.body.style.pointerEvents = 'auto';
+      // Remove loading class from body
+      document.body.classList.remove('loading');
+      // Hide loading indicator
+      setShowLoadingIndicator(false);
+    }
+
+    return () => {
+      // Ensure pointer events are re-enabled when component unmounts
+      document.body.style.pointerEvents = 'auto';
+      document.body.classList.remove('loading');
+      setShowLoadingIndicator(false);
+    };
+  }, [isLoading, isVoiceUploading]);
   
   // Determine what to render based on simple auth state
   const shouldShowLoading = !authChecked;
@@ -500,138 +552,188 @@ export default function Home() {
           show={notification.show}
           onClose={hideNotification}
         />
+        {/* Progress bar overlay khi loading */}
+        {showLoadingIndicator && (
+          <div className="fixed top-0 left-0 w-full z-[9999]">
+            <div className="loading-progress" style={{ height: '4px', background: 'transparent' }}>
+              <div className="absolute top-0 left-0 h-full w-full bg-blue-500 animate-loading-progress" />
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-1 overflow-hidden relative">
           {/* LeftNav cho màn hình lớn */}
           {screenSize.isLarge && <LeftNav />}
           
           {/* Main content */}
-          <main className={`flex-1 flex flex-col overflow-auto relative ${
+          <main className={`flex-1 flex flex-col relative ${
             darkMode ? 'bg-gray-900' : 'bg-white'
           }`}>
-            {/* Tiêu đề */}
-            <div className="p-5 pb-2">
-              <h2 className={`text-lg font-bold tracking-wide ${
-                darkMode ? 'text-gray-100' : 'text-black'
-              }`}>
-                {translations.textToSpeech}
-              </h2>
-            </div>
-            
-            {/* Voice File Display - Show uploaded voice file */}
-            {voicePath && voiceFileName && (
-              <div className="px-5 pb-3">
-                <div className={`flex items-center justify-between p-3 rounded-lg border ${
-                  darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+            {/* Scrollable content container */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              {/* Tiêu đề */}
+              <div className="p-5 pb-2">
+                <h2 className={`text-lg font-bold tracking-wide ${
+                  darkMode ? 'text-gray-100' : 'text-black'
                 }`}>
-                  <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full mr-3 ${
-                      darkMode ? 'bg-green-400' : 'bg-green-500'
-                    }`}></div>
-                    <div>
-                      <div className={`text-sm font-medium ${
-                        darkMode ? 'text-gray-200' : 'text-gray-800'
-                      }`}>
-                        {translations.voiceUploaded || "Voice Uploaded"}
+                  {translations.textToSpeech}
+                </h2>
+              </div>
+              
+              {/* Voice File Display - Show uploaded voice file */}
+              {voicePath && voiceFileName && (
+                <div className="px-5 pb-3">
+                  <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className="flex items-center">
+                      <div className={`w-2 h-2 rounded-full mr-3 ${
+                        darkMode ? 'bg-green-400' : 'bg-green-500'
+                      }`}></div>
+                      <div>
+                        <div className={`text-sm font-medium ${
+                          darkMode ? 'text-gray-200' : 'text-gray-800'
+                        }`}>
+                          {translations.voiceUploaded || "Voice Uploaded"}
+                        </div>
+                        <div className={`text-xs ${
+                          darkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
+                          {voiceFileName}
+                        </div>
                       </div>
-                      <div className={`text-xs ${
-                        darkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
-                        {voiceFileName}
+                    </div>
+                    <button
+                      onClick={() => {
+                        console.log('Remove voice button clicked in main component');
+                        setVoicePath(null);
+                        setVoiceFileName(null);
+                        localStorage.removeItem('voice_path');
+                        localStorage.removeItem('voice_file_name');
+                        // Trigger custom event to update other components
+                        window.dispatchEvent(new CustomEvent('voiceRemoved'));
+                        console.log('Voice removed and event dispatched');
+                      }}
+                      className={`p-2 rounded-full ${
+                        darkMode 
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                      disabled={isLoading || isVoiceUploading}
+                    >
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Loading Indicator for Speech Generation */}
+              {showLoadingIndicator && (
+                <div className="px-5 pb-3">
+                  <div className={`flex items-center justify-between p-3 rounded-lg border ${
+                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-3"></div>
+                      <div>
+                        <div className={`text-sm font-medium ${
+                          darkMode ? 'text-gray-200' : 'text-gray-800'
+                        }`}>
+                          {translations.processing || "Processing"}
+                        </div>
+                        <div className={`text-xs ${
+                          darkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
+                          {translations.generatingSpeech || "Generating speech..."}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      console.log('Remove voice button clicked in main component');
-                      setVoicePath(null);
-                      setVoiceFileName(null);
-                      localStorage.removeItem('voice_path');
-                      localStorage.removeItem('voice_file_name');
-                      // Trigger custom event to update other components
-                      window.dispatchEvent(new CustomEvent('voiceRemoved'));
-                      console.log('Voice removed and event dispatched');
-                    }}
-                    className={`p-2 rounded-full ${
+                </div>
+              )}
+              
+              {/* Textarea - Responsive height */}
+              <div className="px-5 py-3">
+                <div className={`relative ${
+                  screenSize.isSmall ? 'h-[200px]' : 
+                  screenSize.isMedium ? 'h-[250px]' : 'h-[280px]'
+                }`}>
+                  <textarea 
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    className={`w-full h-full p-4 rounded-lg resize-none outline-none border ${
                       darkMode 
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                    }`}
-                    disabled={isLoading}
-                  >
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
+                        ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-500' 
+                        : 'bg-white text-black border-gray-200 placeholder-gray-400'
+                    } ${(isLoading || isVoiceUploading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    placeholder={translations.typePasteText}
+                    disabled={isLoading || isVoiceUploading}
+                    maxLength={4000}
+                  />
+                  {/* Character counter */}
+                  <div className={`absolute bottom-2 right-4 text-sm ${
+                    text.length > 4000 
+                      ? 'text-red-500'
+                      : text.length > 3500
+                        ? 'text-yellow-500'
+                        : darkMode
+                          ? 'text-gray-400'
+                          : 'text-gray-500'
+                  }`}>
+                    {text.length}/4000
+                  </div>
                 </div>
               </div>
-            )}
-            
-            {/* Textarea - Tăng chiều cao */}
-            <div className="px-5 py-3">
-              <div className="relative h-[310px]"> {/* Tăng từ 260px lên 310px */}
-                <textarea 
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  className={`w-full h-full p-4 rounded-lg resize-none outline-none border ${
-                    darkMode 
-                      ? 'bg-gray-800 text-gray-100 border-gray-700 placeholder-gray-500' 
-                      : 'bg-white text-black border-gray-200 placeholder-gray-400'
-                  }`}
-                  placeholder={translations.typePasteText}
-                  disabled={isLoading}
+              
+              {/* Story Genre Component */}
+              <div className="px-5 py-2">
+                <StoryGenre 
+                  selectedGenre={selectedGenre} 
+                  setSelectedGenre={setSelectedGenre}
+                  selectedBackground={selectedBackground}
+                  setSelectedBackground={setSelectedBackground}
                 />
               </div>
+              
+              {/* RightNav dạng nhỏ gọn cho màn hình nhỏ */}
+              {screenSize.isSmall && (
+                <div className="px-5 py-3">
+                  <RightNav
+                    isCompact={true}
+                    disabled={isLoading}
+                    voice={voice}
+                    setVoice={setVoice}
+                    emotion={emotion}
+                    setEmotion={setEmotion}
+                    useAdvancedConfig={useAdvancedConfig}
+                    setUseAdvancedConfig={setUseAdvancedConfig}
+                    pitch={pitch}
+                    setPitch={setPitch}
+                    speed={speed}
+                    setSpeed={setSpeed}
+                    stability={stability}
+                    setStability={setStability}
+                    ambientSound={ambientSound}
+                    setAmbientSound={setAmbientSound}
+                    hasCustomVoice={!!voicePath}
+                  />
+                </div>
+              )}
+              
+              {/* Generate Controls - Always visible with margin */}
+              <div className="px-5 py-4 mt-auto">
+                <GenerateControls 
+                  text={text}
+                  onGenerate={handleGenerate}
+                  isCompact={screenSize.isSmall}
+                  disabled={isLoading || isVoiceUploading}
+                  isLoading={isLoading}
+                />
+              </div>
+              
+              {/* Bottom padding to ensure content is never cut off */}
+              <div className="h-20"></div>
             </div>
-            
-            {/* Thêm khoảng cách trước StoryGenre */}
-            <div className="h-3"></div>
-            
-            {/* Story Genre Component */}
-            <StoryGenre 
-              selectedGenre={selectedGenre} 
-              setSelectedGenre={setSelectedGenre}
-              selectedBackground={selectedBackground}
-              setSelectedBackground={setSelectedBackground}
-            />
-            
-            {/* RightNav dạng nhỏ gọn cho màn hình nhỏ */}
-            {screenSize.isSmall && (
-              <div className="px-5 py-3">
-                <RightNav
-                  isCompact={true}
-                  disabled={isLoading}
-                  voice={voice}
-                  setVoice={setVoice}
-                  emotion={emotion}
-                  setEmotion={setEmotion}
-                  useAdvancedConfig={useAdvancedConfig}
-                  setUseAdvancedConfig={setUseAdvancedConfig}
-                  pitch={pitch}
-                  setPitch={setPitch}
-                  speed={speed}
-                  setSpeed={setSpeed}
-                  stability={stability}
-                  setStability={setStability}
-                  ambientSound={ambientSound}
-                  setAmbientSound={setAmbientSound}
-                  hasCustomVoice={!!voicePath}
-                />
-              </div>
-            )}
-            
-            {/* Thêm khoảng cách trước Generate Controls */}
-            <div className="h-2"></div>
-            
-            {/* Generate Controls */}
-            <GenerateControls 
-              text={text}
-              onGenerate={handleGenerate}
-              isCompact={screenSize.isSmall}
-              disabled={isLoading}
-            />
-            
-            {/* Điều chỉnh khoảng cách dưới để chỉ còn 0.8cm với Player Footer */}
-            {/* 0.8cm ≈ 8px */}
-            <div className="h-8"></div>
             
             {/* Mini Player Trigger */}
             {!showPlayer && (
@@ -651,7 +753,7 @@ export default function Home() {
           {!screenSize.isSmall && (
             <RightNav
               isCompact={false}
-              disabled={isLoading}
+              disabled={isLoading || isVoiceUploading}
               voice={voice}
               setVoice={setVoice}
               emotion={emotion}
@@ -692,93 +794,47 @@ export default function Home() {
               <div className={`p-4 flex justify-between items-center border-b ${
                 darkMode ? 'border-gray-700' : 'border-gray-200'
               }`}>
-                <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                  SYNSERE
-                </h2>
-                {/* Nút đóng ở góc trên bên phải */}
+                <div className={`text-lg font-bold ${
+                  darkMode ? 'text-gray-100' : 'text-black'
+                }`}>
+                  {translations.leftNavTitle}
+                </div>
                 <button
                   onClick={() => setShowMobileLeftNav(false)}
                   className={`p-2 rounded-full ${
-                    darkMode 
-                      ? 'bg-gray-800 text-gray-400 hover:text-white' 
-                      : 'bg-gray-100 text-gray-600 hover:text-gray-900'
+                    darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                   }`}
                 >
-                  <XMarkIcon className="h-5 w-5" />
+                  <XMarkIcon className="h-4 w-4" />
                 </button>
               </div>
               
-              {/* Main content của LeftNav */}
-              <div className="h-[calc(100%-112px)] overflow-y-auto">
-                <LeftNav />
+              {/* LeftNav content */}
+              <div className="p-4">
+                {/* LeftNav items */}
               </div>
-              
-              {/* Thêm nút chuyển đổi mode và ngôn ngữ ở mobile left nav */}
-              <div className={`p-4 flex items-center justify-between ${
-                darkMode ? 'border-gray-700' : 'border-gray-200'
-              }`}>          
-              </div>
-            </div>
-            
-            {/* Nút đóng dạng vòm bên ngoài LeftNav */}
-            <div 
-              className="absolute top-1/3 left-64"
-              style={{ zIndex: 11 }}
-            >
-              <button
-                onClick={() => setShowMobileLeftNav(false)}
-                className={`flex items-center px-4 py-3 rounded-r-full shadow-lg ${
-                  darkMode 
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <XMarkIcon className="h-5 w-5 mr-1" />
-                <span>{language === 'en' ? 'Close' : 'Đóng'}</span>
-              </button>
             </div>
           </div>
         )}
-        
-        {/* Full Player Footer */}
-        {showPlayer && (
-          <PlayerFooter 
+
+        {/* Audio Player Footer */}
+        {audioUrl && (
+          <PlayerFooter
+            audioUrl={audioUrl}
             onClose={() => {
+              setAudioUrl(undefined);
               setShowPlayer(false);
-              setShowMiniPlayer(true);
+              setShowMiniPlayer(false);
             }}
             isCompact={screenSize.isSmall}
-            audioUrl={audioUrl}
             isLoading={isLoading}
           />
-        )}
-        
-        {/* Mini Player (alternative version) - Điều chỉnh vị trí */}
-        {showMiniPlayer && (
-          <div 
-            onClick={() => setShowPlayer(true)}
-            className={`fixed bottom-0 ${
-              screenSize.isLarge 
-                ? 'left-64 right-96' 
-                : screenSize.isMedium 
-                  ? 'left-0 right-96' 
-                  : 'left-0 right-0'
-            } h-8 flex items-center justify-center cursor-pointer ${
-              darkMode 
-                ? 'bg-gray-800 border-t border-gray-700 hover:bg-gray-700' 
-                : 'bg-gray-100 border-t border-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            <PlayIcon className={`h-4 w-4 mr-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-            <span className={`text-sm truncate max-w-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            </span>
-          </div>
         )}
       </div>
     );
   }
 
-  // If not authenticated, show login prompt or redirect
+  // Nếu không authenticated
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">

@@ -218,13 +218,17 @@ async def create_speech_history(
     speech_data: SpeechHistoryInput,
     current_user = Depends(get_current_user)
 ):
-    history_entry = speech_data.dict()
-    history_entry["user_id"] = current_user["_id"]
-    history_entry["created_at"] = datetime.utcnow()
+    # Create history entry with Vietnam timezone (UTC+7)
+    history_entry = {
+        "user_id": current_user["_id"],
+        "text": speech_data.text,
+        "audio_url": speech_data.audio_url,
+        "settings": speech_data.settings,
+        "created_at": datetime.utcnow() + timedelta(hours=7)  # Add 7 hours for Vietnam timezone
+    }
     
     result = db.speech_history.insert_one(history_entry)
-    
-    return {"id": str(result.inserted_id), "message": "History recorded successfully"}
+    return {"id": str(result.inserted_id)}
 
 @router.get("/speech-history")
 async def get_speech_history(current_user = Depends(get_current_user)):

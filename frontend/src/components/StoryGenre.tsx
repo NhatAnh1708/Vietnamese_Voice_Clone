@@ -9,13 +9,15 @@ interface StoryGenreProps {
   setSelectedGenre: (g: string) => void;
   selectedBackground: string;
   setSelectedBackground: (b: string) => void;
+  disabled?: boolean;
 }
 
 export default function StoryGenre({ 
   selectedGenre, 
   setSelectedGenre, 
   selectedBackground,
-  setSelectedBackground 
+  setSelectedBackground,
+  disabled = false 
 }: StoryGenreProps) {
   const { darkMode } = useTheme();
   const { translations, language } = useLanguage();
@@ -76,7 +78,7 @@ export default function StoryGenre({
   return (
     <div className={`sticky bottom-20 md:bottom-16 pt-3 border-t pb-1 px-5 ${
       darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
-    }`}>
+    } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
       <h2 className={`text-sm font-semibold mb-3 ${
         darkMode ? 'text-gray-100' : 'text-gray-600'
       }`}>{translations.storyGenre}</h2>
@@ -95,7 +97,8 @@ export default function StoryGenre({
                 : darkMode
                   ? 'border-gray-700 bg-gray-900 hover:bg-gray-800 text-gray-300'
                   : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
-            }`}
+            } ${disabled ? 'cursor-not-allowed' : ''}`}
+            disabled={disabled}
           >
             <span className="mr-2">{genre.icon}</span>
             <span className="text-sm">{genre.name}</span>
@@ -120,12 +123,13 @@ export default function StoryGenre({
                 className={`py-1 px-2 border rounded text-xs transition-all duration-150 ease-in-out ${
                   selectedBackground === background.id
                     ? darkMode 
-                      ? 'border-blue-700 bg-blue-900 text-blue-200 ring-1 ring-blue-700'
-                      : 'border-blue-300 bg-blue-50 text-blue-800 ring-1 ring-blue-300'
+                      ? 'border-gray-600 bg-gray-800 text-gray-200 ring-1 ring-gray-600'
+                      : 'border-gray-300 bg-white shadow-sm shadow-gray-200/60 ring-1 ring-gray-200 text-gray-800'
                     : darkMode
                       ? 'border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300'
                       : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
-                }`}
+                } ${disabled ? 'cursor-not-allowed' : ''}`}
+                disabled={disabled}
               >
                 {background.name}
               </button>

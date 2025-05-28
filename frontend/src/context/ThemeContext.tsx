@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 type ThemeContextType = {
   darkMode: boolean;
   toggleDarkMode: () => void;
+  toggleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -27,8 +28,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle('dark', newMode);
   };
 
+  // Alias for settings page compatibility
+  const toggleTheme = toggleDarkMode;
+
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ darkMode, toggleDarkMode, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

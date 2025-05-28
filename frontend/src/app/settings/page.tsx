@@ -258,20 +258,20 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium mb-2">
                       {language === 'en' ? 'Theme' : 'Giao diện'}
                     </label>
-                    <div className="flex items-center">
+                    <div className="flex flex-col space-y-2">
                       <button
                         onClick={toggleTheme}
-                        className={`px-4 py-2 rounded-md transition-colors ${
+                        className={`w-full px-4 py-3 rounded-md transition-colors text-center font-medium ${
                           darkMode 
-                            ? 'bg-indigo-600 text-white' 
-                            : 'bg-gray-200 text-gray-800'
+                            ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                         }`}
                       >
                         {darkMode 
                           ? (language === 'en' ? 'Dark Mode' : 'Chế độ tối') 
                           : (language === 'en' ? 'Light Mode' : 'Chế độ sáng')}
                       </button>
-                      <span className="ml-2 text-sm text-gray-500">
+                      <span className="text-xs text-gray-500 text-center">
                         {language === 'en' 
                           ? 'Click to toggle light/dark mode' 
                           : 'Nhấn để chuyển đổi chế độ sáng/tối'}
@@ -284,23 +284,23 @@ export default function SettingsPage() {
                     <label className="block text-sm font-medium mb-2">
                       {language === 'en' ? 'Language' : 'Ngôn ngữ'}
                     </label>
-                    <div className="flex items-center space-x-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => changeLanguage('en')}
-                        className={`px-4 py-2 rounded-md transition-colors ${
+                        className={`px-4 py-3 rounded-md transition-colors text-center font-medium ${
                           language === 'en' 
-                            ? 'bg-indigo-600 text-white' 
-                            : 'bg-gray-200 text-gray-800'
+                            ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                         }`}
                       >
                         English
                       </button>
                       <button
                         onClick={() => changeLanguage('vi')}
-                        className={`px-4 py-2 rounded-md transition-colors ${
+                        className={`px-4 py-3 rounded-md transition-colors text-center font-medium ${
                           language === 'vi' 
-                            ? 'bg-indigo-600 text-white' 
-                            : 'bg-gray-200 text-gray-800'
+                            ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                         }`}
                       >
                         Tiếng Việt

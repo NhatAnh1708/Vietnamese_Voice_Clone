@@ -48,7 +48,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       timestamp: new Date()
     };
     
-    setNotifications(prevNotifications => [newNotification, ...prevNotifications]);
+    // Remove old notifications if there are more than 5
+    setNotifications(prevNotifications => {
+      const updatedNotifications = [newNotification, ...prevNotifications];
+      if (updatedNotifications.length > 5) {
+        return updatedNotifications.slice(0, 5);
+      }
+      return updatedNotifications;
+    });
+
+    // Auto-mark as read after 5 seconds
+    setTimeout(() => {
+      markAsRead(newNotification.id);
+    }, 5000);
   };
 
   // Mark a notification as read

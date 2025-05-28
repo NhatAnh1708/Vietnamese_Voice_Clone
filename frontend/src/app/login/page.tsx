@@ -176,7 +176,7 @@ export default function LoginPage() {
               </div>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <a href="#" className="text-xs text-blue-600 hover:underline">Forgot Password?</a>
+                {/* <a href="#" className="text-xs text-blue-600 hover:underline">Forgot Password?</a> */}
               </div>
               <input
                 type="password"

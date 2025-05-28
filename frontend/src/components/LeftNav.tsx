@@ -158,6 +158,7 @@ export default function LeftNav() {
         {/* Navigation Tabs */}
         <div className="space-y-1 mb-6">
           <Link href="/"
+            onClick={() => setActiveTab('voices')}
             className={`flex items-center w-full p-2 rounded-md ${activeTab === 'voices' ? (darkMode ? 'bg-gray-700' : 'bg-gray-100') : (darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50')}`}
           >
             <MicrophoneIcon className={`h-5 w-5 mr-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
@@ -165,6 +166,7 @@ export default function LeftNav() {
           </Link>
           
           <Link href="/history"
+            onClick={() => setActiveTab('history')}
             className={`flex items-center w-full p-2 rounded-md ${activeTab === 'history' ? (darkMode ? 'bg-gray-700' : 'bg-gray-100') : (darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50')}`}
           >
             <ClockIcon className={`h-5 w-5 mr-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
@@ -245,8 +247,59 @@ export default function LeftNav() {
         )}
 
         {activeTab === 'documents' && (
-          <div className={`border-t pt-4 text-sm ${darkMode ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-500'}`}>
-            {translations.documentsAppearHere}
+          <div className={`border-t pt-4 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <h3 className={`font-medium mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                {language === 'vi' ? 'Hướng dẫn Voice Clone' : 'Voice Clone Guide'}
+              </h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <h4 className={`font-medium text-xs mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                    {language === 'vi' ? '1. Tải lên file audio:' : '1. Upload audio file:'}
+                  </h4>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {language === 'vi' 
+                      ? 'Nhấn "Thêm giọng nói" và chọn file MP3 chất lượng cao (ít nhất 30 giây).' 
+                      : 'Click "Add Voice" and select a high-quality MP3 file (at least 30 seconds).'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className={`font-medium text-xs mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                    {language === 'vi' ? '2. Tạo giọng nói:' : '2. Generate speech:'}
+                  </h4>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {language === 'vi' 
+                      ? 'Nhập văn bản và nhấn "Tạo giọng nói". Hệ thống sẽ sử dụng giọng bạn đã tải lên.' 
+                      : 'Enter text and click "Generate Speech". The system will use your uploaded voice.'}
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className={`font-medium text-xs mb-1 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                    {language === 'vi' ? '3. Lưu ý:' : '3. Notes:'}
+                  </h4>
+                  <ul className={`text-xs space-y-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <li>
+                      {language === 'vi' 
+                        ? '• File âm thanh rõ ràng, không nhiễu' 
+                        : '• Clear audio file without noise'}
+                    </li>
+                    <li>
+                      {language === 'vi' 
+                        ? '• Độ dài 30 giây - 2 phút là tối ưu' 
+                        : '• 30 seconds - 2 minutes length is optimal'}
+                    </li>
+                    <li>
+                      {language === 'vi' 
+                        ? '• Chỉ hỗ trợ định dạng MP3' 
+                        : '• Only MP3 format supported'}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

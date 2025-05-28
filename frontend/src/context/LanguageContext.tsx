@@ -6,21 +6,20 @@ type Language = 'en' | 'vi';
 interface LanguageContextType {
   language: Language;
   toggleLanguage: () => void;
+  changeLanguage: (lang: Language) => void;
   translations: Record<string, string>;
 }
 
 // Define translations for both languages
 const translationMap: Record<Language, Record<string, string>> = {
   en: {
-
-
     // Navigation
     "voices": "Voices",
     "history": "History",
     "documents": "Documents",
     "addVoice": "Add Voice",
-    "recordOrUpload": "Record your voice or upload files",
-    "voiceUploaded": "Voice Uploaded",
+    "recordOrUpload": "Record or Upload",
+    "voiceUploaded": "Voice uploaded",
     "historyAppearHere": "Your history will appear here",
     "documentsAppearHere": "Your documents will appear here",
     
@@ -29,13 +28,13 @@ const translationMap: Record<Language, Record<string, string>> = {
     "notifications": "Notifications",
     "myProfile": "My Profile",
     "settings": "Settings",
-    "signOut": "Sign out",
+    "signOut": "Sign Out",
     "myWorkspace": "My Workspace",
     
     // Main Content
     "textToSpeech": "Text-to-Speech",
-    "typePasteText": "Type or paste your text here...",
-    "storyGenre": "Story genre",
+    "typePasteText": "Type or paste text here...",
+    "storyGenre": "Story Genre",
     "narrate": "Narrate",
     "comedy": "Comedy",
     "podcast": "Podcast",
@@ -43,7 +42,6 @@ const translationMap: Record<Language, Record<string, string>> = {
     "backgroundAudio": "Background Audio",
     
     // Generate Controls
-    "creditsRemaining": "credits remaining",
     "generateSpeech": "Generate Speech",
     
     // Right Nav
@@ -52,37 +50,34 @@ const translationMap: Record<Language, Record<string, string>> = {
     "pitch": "Pitch",
     "ambientSound": "Ambient Sound",
     "speed": "Speed",
-    "stability": "Stability",
     "female": "Female",
     "male": "Male",
     "none": "None",
     "happy": "Happy",
-    "sad": "Sad",
-    "confident": "Confident",
-    "shy": "Shy",
     "lower": "Lower",
     "higher": "Higher",
     "less": "Less",
     "more": "More",
     "slower": "Slower",
     "faster": "Faster",
-    "variable": "Variable",
-    "stable": "Stable",
     "defaultSettings": "Default Settings",
     "advancedConfiguration": "Advanced Configuration",
-    "syncModel": "Sync Model",
-    "loadingModel": "Loading model...",
     "emotionDisabledNote": "Emotion mode is disabled when using advanced configuration",
     
+    // Emotions
+    "Truyền Cảm": "Expressive",
+    "Trầm ấm": "Warm",
+    "Vui Vẻ": "Happy",
+    
     // Player
-    "currentAudio": "Current audio",
-    "processingText": "Processing your text",
+    "currentAudio": "Current Audio",
+    "processingText": "Processing text",
     
     // Notifications
     "apiError": "Error",
     "apiSuccess": "Success",
     "speechGenerationSuccess": "Speech generated successfully!",
-    "speechGenerationError": "Failed to generate speech. Please try again."
+    "speechGenerationError": "Could not generate speech. Please try again."
   },
   vi: {
     // Navigation
@@ -114,36 +109,27 @@ const translationMap: Record<Language, Record<string, string>> = {
     "backgroundAudio": "Âm thanh nền",
     
     // Generate Controls
-    "creditsRemaining": "tín dụng còn lại",
     "generateSpeech": "Tạo giọng nói",
     
     // Right Nav
     "voice": "Giọng nói",
-    "emotion": "Cảm xúc",
+    "emotion": "Giọng đọc",
     "pitch": "Cao độ",
     "ambientSound": "Âm thanh nền",
     "speed": "Tốc độ",
-    "stability": "Độ ổn định",
     "female": "Nữ",
     "male": "Nam",
     "none": "Không",
     "happy": "Vui vẻ",
-    "sad": "Buồn bã",
-    "confident": "Tự tin",
-    "shy": "Nhút nhát",
     "lower": "Thấp hơn",
     "higher": "Cao hơn",
     "less": "Ít hơn",
     "more": "Nhiều hơn",
     "slower": "Chậm hơn",
     "faster": "Nhanh hơn",
-    "variable": "Thay đổi",
-    "stable": "Ổn định",
     "defaultSettings": "Cài đặt mặc định",
     "advancedConfiguration": "Cấu hình nâng cao",
-    "syncModel": "Đồng bộ model",
-    "loadingModel": "Đang tải model...",
-    "emotionDisabledNote": "Chế độ cảm xúc bị vô hiệu hóa khi sử dụng cấu hình nâng cao",
+    "emotionDisabledNote": "Chế độ giọng đọc bị vô hiệu hóa khi sử dụng cấu hình nâng cao",
     
     // Player
     "currentAudio": "Âm thanh hiện tại",
@@ -160,6 +146,7 @@ const translationMap: Record<Language, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType>({
   language: 'en',
   toggleLanguage: () => {},
+  changeLanguage: () => {},
   translations: translationMap.en,
 });
 
@@ -183,8 +170,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('language', newLanguage);
   };
   
+  const changeLanguage = (lang: Language) => {
+    setLanguage(lang);
+    setTranslations(translationMap[lang]);
+    localStorage.setItem('language', lang);
+  };
+  
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, translations }}>
+    <LanguageContext.Provider value={{ language, toggleLanguage, changeLanguage, translations }}>
       {children}
     </LanguageContext.Provider>
   );
