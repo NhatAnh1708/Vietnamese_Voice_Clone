@@ -152,6 +152,18 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
     const percent = (e.clientX - rect.left) / rect.width;
     seek(percent * duration);
   };
+
+  // Download audio
+  const downloadAudio = () => {
+    if (!audioUrl) return;
+    
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    a.download = `synsere-audio-${new Date().getTime()}.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   
   // Version for small screens
   if (isCompact) {
@@ -189,16 +201,18 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
         {/* Controls and time */}
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center">
-            {/* Thêm lại các nút điều hướng ±5s */}
+            {/* Backward button */}
             <button
+              onClick={() => seek(currentTime - 5)}
               className={`mr-1 p-1 rounded-full ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
+                darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'
               } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
               <BackwardIcon className="h-4 w-4" />
             </button>
           
+            {/* Play/Pause button */}
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               className={`p-1 rounded-full ${
@@ -219,9 +233,11 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
               )}
             </button>
             
+            {/* Forward button */}
             <button
+              onClick={() => seek(currentTime + 5)}
               className={`ml-1 p-1 rounded-full ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
+                darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'
               } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
@@ -253,33 +269,46 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
             </div>
           </div>
           
-          {/* Audio player */}
-          {audioUrl && (
-            <audio
-              ref={audioRef}
-              src={audioUrl}
-              onEnded={() => setIsPlaying(false)}
-              onLoadedMetadata={() => setIsAudioReady(true)}
-              style={{ display: 'none' }}
-            />
-          )}
-          
-          <button 
-            onClick={onClose}
-            className={`p-1 rounded-full ${
-              darkMode ? 'text-gray-400' : 'text-gray-600'
-            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={isLoading}
-          >
-            <XMarkIcon className="h-4 w-4" />
-          </button>
+          <div className="flex space-x-2">
+            {/* Download button */}
+            <button 
+              onClick={downloadAudio}
+              className={`p-1 rounded-full ${
+                darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+            </button>
+            
+            {/* Close button */}
+            <button 
+              onClick={onClose}
+              className={`p-1 rounded-full ${
+                darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-600 hover:bg-gray-100'
+              } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
+            >
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
+        {/* Audio player */}
+        {audioUrl && (
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onEnded={() => setIsPlaying(false)}
+            onLoadedMetadata={() => setIsAudioReady(true)}
+            style={{ display: 'none' }}
+          />
+        )}
       </div>
     );
   }
   
   // Phiên bản UI cho màn hình trung bình (761px-920px)
-  // Thay đổi để tránh truy cập window trực tiếp
   const isNarrowMedium = windowWidth >= 761 && windowWidth <= 920;
   
   // Full version for medium and large screens
@@ -294,100 +323,124 @@ export default function PlayerFooter({ onClose, isCompact = false, audioUrl, isL
           ? 'bg-gray-900 border-t border-gray-700' 
           : 'bg-white border-t border-gray-200'
       }`}>
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex flex-col flex-1">
-            <div className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{translations.currentAudio}</div>
-            <div className="flex items-center">
-              {/* Nút lùi 5s */}
-              <button
-                onClick={() => seek(currentTime - 5)}
-                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title="Lùi 5 giây"
-                disabled={isLoading}
-              >
-                <BackwardIcon className="h-5 w-5" />
-              </button>
-              {/* Nút play/pause */}
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className={`mx-2 p-2 rounded-full ${darkMode ? 'bg-gray-800' : 'bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title={isPlaying ? "Tạm dừng" : "Phát"}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-current" />
-                ) : isPlaying ? (
-                  <PauseIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-                ) : (
-                  <PlayIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-                )}
-              </button>
-              {/* Nút tiến 5s */}
-              <button
-                onClick={() => seek(currentTime + 5)}
-                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title="Tiến 5 giây"
-                disabled={isLoading}
-              >
-                <ForwardIcon className="h-5 w-5" />
-              </button>
-              {/* Thanh progress đẹp */}
-              <div className="flex-1 mx-4">
-                <div className="flex items-center">
-                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatTime(currentTime)}</span>
-                  <div
-                    className={`relative flex-1 h-2 mx-2 rounded-full cursor-pointer ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={handleBarClick}
-                  >
-                    {isLoading ? (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <div className="w-2/3 h-2 bg-black rounded-full overflow-hidden">
-                          <div className="h-full bg-black animate-pulse rounded-full" style={{ width: '60%' }}></div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        className={`absolute top-0 left-0 h-2 rounded-full bg-black`}
-                        style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                      />
-                    )}
-                  </div>
-                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatTime(duration)}</span>
-                </div>
-              </div>
-              {/* Audio element ẩn */}
-              <audio
-                ref={audioRef}
-                src={audioUrl}
-                onEnded={() => setIsPlaying(false)}
-                onLoadedMetadata={() => setIsAudioReady(true)}
-                style={{ display: 'none' }}
-              />
-              {/* Nút tải về file audio */}
-              {audioUrl && (
-                <a
-                  href={audioUrl}
-                  download
-                  className={`ml-2 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
-                  title="Tải về audio"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l-6-6m6 6l6-6" />
-                  </svg>
-                </a>
+        <div className="w-full max-w-7xl mx-auto flex items-center">
+          <div className="flex items-center">
+            {/* Nút lùi 5s */}
+            <button
+              onClick={() => seek(currentTime - 5)}
+              className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Lùi 5 giây"
+              disabled={isLoading}
+            >
+              <BackwardIcon className="h-5 w-5" />
+            </button>
+            
+            {/* Nút play/pause */}
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className={`mx-2 p-2 rounded-full ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={isPlaying ? "Tạm dừng" : "Phát"}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-current" />
+              ) : isPlaying ? (
+                <PauseIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+              ) : (
+                <PlayIcon className={`h-6 w-6 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
               )}
-              {/* Nút đóng */}
-              <button
-                onClick={onClose}
-                className={`ml-4 p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title="Đóng"
-                disabled={isLoading}
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
+            </button>
+            
+            {/* Nút tiến 5s */}
+            <button
+              onClick={() => seek(currentTime + 5)}
+              className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Tiến 5 giây"
+              disabled={isLoading}
+            >
+              <ForwardIcon className="h-5 w-5" />
+            </button>
+          </div>
+          
+          <div className="flex-1 flex items-center mx-6">
+            {/* Label for current audio */}
+            {!isNarrowMedium && (
+              <div className="w-32">
+                <div className={`text-sm font-medium ${
+                  darkMode ? 'text-gray-200' : 'text-gray-800'
+                }`}>{translations.currentAudio}</div>
+                {isLoading ? (
+                  <div className="flex items-center text-xs text-black animate-pulse">
+                    <span>Đang xử lý...</span>
+                    <svg className="ml-1 w-3 h-3 animate-spin text-black" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+                  </div>
+                ) : (
+                  <div className={`text-xs ${
+                    darkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>{translations.processingText}</div>
+                )}
+              </div>
+            )}
+            
+            {/* Progress bar and time */}
+            <div className={`flex-1 flex flex-col ${isNarrowMedium ? 'ml-2' : 'mx-4'}`}>
+              <div className="flex items-center">
+                <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatTime(currentTime)}</span>
+                <div
+                  className={`relative flex-1 h-2 mx-2 rounded-full cursor-pointer ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={handleBarClick}
+                >
+                  {isLoading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-2/3 h-2 bg-black rounded-full overflow-hidden">
+                        <div className="h-full bg-black animate-pulse rounded-full" style={{ width: '60%' }}></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`absolute top-0 left-0 h-2 rounded-full ${darkMode ? 'bg-gray-300' : 'bg-gray-900'}`}
+                      style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                    />
+                  )}
+                </div>
+                <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatTime(duration)}</span>
+              </div>
             </div>
           </div>
+          
+          <div className="flex space-x-2">
+            {/* Download button */}
+            {audioUrl && (
+              <button
+                onClick={downloadAudio}
+                className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title="Tải về audio"
+                disabled={isLoading}
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+              </button>
+            )}
+            
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-full ${darkMode ? 'text-gray-400 hover:bg-gray-800 hover:bg-opacity-50 hover:text-gray-200' : 'text-gray-700 hover:bg-gray-100'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Đóng"
+              disabled={isLoading}
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
+
+        {/* Audio element ẩn */}
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onEnded={() => setIsPlaying(false)}
+          onLoadedMetadata={() => setIsAudioReady(true)}
+          style={{ display: 'none' }}
+        />
       </div>
     );
   }

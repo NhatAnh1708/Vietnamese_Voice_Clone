@@ -164,10 +164,11 @@ export default function RightNav({
               id="advancedConfigToggleCompact"
               checked={useAdvancedConfig}
               onChange={() => setUseAdvancedConfig(!useAdvancedConfig)}
+              style={{ accentColor: '#111827' }}
               className={`h-4 w-4 mr-2 rounded border ${
                 darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-blue-500' 
-                  : 'bg-white border-gray-300 text-blue-600'
+                  ? 'bg-gray-700 border-gray-600' 
+                  : 'bg-white border-gray-300'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={disabled}
             />
@@ -207,7 +208,8 @@ export default function RightNav({
                   max="100"
                   value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
                   onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
-                  className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ accentColor: '#111827' }}
+                  className={`w-full h-1 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={disabled}
                 />
               </div>
@@ -228,7 +230,8 @@ export default function RightNav({
                   max="100"
                   value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
                   onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
-                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ accentColor: '#111827' }}
+                  className={`w-full ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={disabled}
                 />
                 <div className={`flex justify-between text-xs mt-2 ${
@@ -255,7 +258,8 @@ export default function RightNav({
                   max="100"
                   value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
                   onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
-                  className={`w-full h-1 ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ accentColor: '#111827' }}
+                  className={`w-full h-1 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={disabled}
                 />
               </div>
@@ -327,10 +331,11 @@ export default function RightNav({
               id="advancedConfigToggle"
               checked={useAdvancedConfig}
               onChange={() => setUseAdvancedConfig(!useAdvancedConfig)}
+              style={{ accentColor: '#111827' }}
               className={`h-5 w-5 mr-3 rounded border ${
                 darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-blue-500' 
-                  : 'bg-white border-gray-300 text-blue-600'
+                  ? 'bg-gray-700 border-gray-600' 
+                  : 'bg-white border-gray-300'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={disabled}
             />
@@ -370,7 +375,8 @@ export default function RightNav({
                   max="100"
                   value={toPercent(pitch, paramRanges.pitch.min, paramRanges.pitch.max)}
                   onChange={(e) => setPitch(fromPercent(parseInt(e.target.value), paramRanges.pitch.min, paramRanges.pitch.max))}
-                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ accentColor: '#111827' }}
+                  className={`w-full ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={disabled}
                 />
                 <div className={`flex justify-between text-xs mt-2 ${
@@ -397,7 +403,8 @@ export default function RightNav({
                   max="100"
                   value={toPercent(ambientSound, paramRanges.ambientSound.min, paramRanges.ambientSound.max)}
                   onChange={(e) => setAmbientSound(fromPercent(parseInt(e.target.value), paramRanges.ambientSound.min, paramRanges.ambientSound.max))}
-                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ accentColor: '#111827' }}
+                  className={`w-full ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={disabled}
                 />
                 <div className={`flex justify-between text-xs mt-2 ${
@@ -424,7 +431,8 @@ export default function RightNav({
                   max="100"
                   value={toPercent(speed, paramRanges.speed.min, paramRanges.speed.max)}
                   onChange={(e) => setSpeed(fromPercent(parseInt(e.target.value), paramRanges.speed.min, paramRanges.speed.max))}
-                  className={`w-full ${darkMode ? 'accent-white' : 'accent-gray-900'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{ accentColor: '#111827' }}
+                  className={`w-full ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={disabled}
                 />
                 <div className={`flex justify-between text-xs mt-2 ${

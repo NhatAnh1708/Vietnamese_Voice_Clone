@@ -16,9 +16,9 @@ const translationMap: Record<Language, Record<string, string>> = {
     // Navigation
     "voices": "Voices",
     "history": "History",
-    "documents": "Documents",
+    "documents": "Guideline",
     "addVoice": "Add Voice",
-    "recordOrUpload": "Record or Upload",
+    "recordOrUpload": " ",
     "voiceUploaded": "Voice uploaded",
     "historyAppearHere": "Your history will appear here",
     "documentsAppearHere": "Your documents will appear here",
@@ -83,9 +83,9 @@ const translationMap: Record<Language, Record<string, string>> = {
     // Navigation
     "voices": "Giọng nói",
     "history": "Lịch sử",
-    "documents": "Tài liệu",
+    "documents": "Hướng dẫn",
     "addVoice": "Thêm giọng nói",
-    "recordOrUpload": "Ghi âm hoặc tải lên tệp",
+    "recordOrUpload": " ",
     "voiceUploaded": "Giọng nói đã được thêm",
     "historyAppearHere": "Lịch sử của bạn sẽ xuất hiện ở đây",
     "documentsAppearHere": "Tài liệu của bạn sẽ xuất hiện ở đây",

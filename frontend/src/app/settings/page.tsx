@@ -237,7 +237,7 @@ export default function SettingsPage() {
                   
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="px-4 py-2 bg-[#111827] text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#111827] transition-colors duration-200"
                   >
                     {language === 'en' ? 'Change Password' : 'Đổi mật khẩu'}
                   </button>
@@ -261,10 +261,10 @@ export default function SettingsPage() {
                     <div className="flex flex-col space-y-2">
                       <button
                         onClick={toggleTheme}
-                        className={`w-full px-4 py-3 rounded-md transition-colors text-center font-medium ${
+                        className={`w-full px-4 py-3 rounded-md transition-colors duration-200 text-center font-medium ${
                           darkMode 
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
-                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                            ? 'bg-[#111827] text-white hover:bg-gray-700 active:bg-gray-700' 
+                            : 'bg-gray-200 text-gray-800 hover:bg-[#111827] hover:text-white active:bg-[#111827] active:text-white'
                         }`}
                       >
                         {darkMode 
@@ -287,20 +287,20 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => changeLanguage('en')}
-                        className={`px-4 py-3 rounded-md transition-colors text-center font-medium ${
+                        className={`px-4 py-3 rounded-md transition-colors duration-200 text-center font-medium ${
                           language === 'en' 
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
-                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                            ? 'bg-[#111827] text-white hover:bg-gray-700 active:bg-gray-700' 
+                            : 'bg-gray-200 text-gray-800 hover:bg-[#111827] hover:text-white active:bg-[#111827] active:text-white'
                         }`}
                       >
                         English
                       </button>
                       <button
                         onClick={() => changeLanguage('vi')}
-                        className={`px-4 py-3 rounded-md transition-colors text-center font-medium ${
+                        className={`px-4 py-3 rounded-md transition-colors duration-200 text-center font-medium ${
                           language === 'vi' 
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
-                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                            ? 'bg-[#111827] text-white hover:bg-gray-700 active:bg-gray-700' 
+                            : 'bg-gray-200 text-gray-800 hover:bg-[#111827] hover:text-white active:bg-[#111827] active:text-white'
                         }`}
                       >
                         Tiếng Việt
@@ -315,7 +315,7 @@ export default function SettingsPage() {
                     </h3>
                     <a 
                       href="/profile" 
-                      className="block text-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="block text-center px-4 py-2 bg-[#111827] text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-[#111827] transition-colors duration-200"
                     >
                       {language === 'en' ? 'Back to Profile' : 'Quay lại hồ sơ'}
                     </a>
@@ -328,4 +328,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-} 
+}

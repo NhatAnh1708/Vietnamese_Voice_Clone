@@ -146,7 +146,7 @@ export default function LeftNav() {
       setActiveTab('voices');
     } else if (pathname === '/history') {
       setActiveTab('history');
-    } else if (pathname === '/documents') {
+    } else if (pathname === '/guideline') {
       setActiveTab('documents');
     }
   }, [pathname]);
@@ -234,7 +234,7 @@ export default function LeftNav() {
             <p className={`mt-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               {uploadedVoiceFile 
                 ? (translations.voiceUploaded || "Voice uploaded successfully")
-                : (translations.recordOrUpload || "Record your voice or upload files")
+                : (translations.recordOrUpload || "Record or upload files")
               }
             </p>
           </div>

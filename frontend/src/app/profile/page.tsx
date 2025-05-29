@@ -191,7 +191,10 @@ export default function ProfilePage() {
                     <div className="flex space-x-3">
                       <button
                         type="submit"
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        style={{ backgroundColor: '#111827' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0f172a'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#111827'}
                       >
                         {language === 'en' ? 'Save Changes' : 'Lưu thay đổi'}
                       </button>
@@ -235,7 +238,10 @@ export default function ProfilePage() {
                       
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="mt-4 px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        style={{ backgroundColor: '#111827' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0f172a'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#111827'}
                       >
                         {language === 'en' ? 'Edit Profile' : 'Chỉnh sửa hồ sơ'}
                       </button>
@@ -273,7 +279,10 @@ export default function ProfilePage() {
                   
                   <a 
                     href="/settings" 
-                    className="mt-4 block text-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="mt-4 block text-center px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    style={{ backgroundColor: '#111827' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0f172a'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#111827'}
                   >
                     {language === 'en' ? 'Account Settings' : 'Cài đặt tài khoản'}
                   </a>
@@ -285,4 +294,4 @@ export default function ProfilePage() {
       </div>
     </div>
   );
-} 
+}
