@@ -9,6 +9,7 @@ notebooks/*
 .DS_Store
 # C extensions
 *.so
+backend/src/TTS1/*
 backend/src/core/output/*.wav
 backend/src/TTS/*
 backend/src/model_registry/*

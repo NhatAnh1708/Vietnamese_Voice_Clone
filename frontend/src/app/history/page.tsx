@@ -319,7 +319,11 @@ export default function HistoryPage() {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => playAudio(entry.id, entry.audio_url)}
-                      className={`p-2 rounded-full ${darkMode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-indigo-500 hover:bg-indigo-600'} text-white`}
+                      className={`p-2 rounded-full border transition-all duration-200 ${
+                        currentlyPlaying === entry.id 
+                          ? 'bg-gray-800 text-white border-gray-800' 
+                          : 'border-gray-300 text-gray-500 hover:bg-gray-800 hover:text-white hover:border-gray-800'
+                      }`}
                       aria-label={currentlyPlaying === entry.id ? "Pause" : "Play"}
                     >
                       {currentlyPlaying === entry.id ? (
@@ -331,7 +335,7 @@ export default function HistoryPage() {
                     
                     <button
                       onClick={() => downloadAudio(entry.audio_url, `speech-${entry.id.substring(0, 8)}`)}
-                      className={`p-2 rounded-full ${darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'} text-white`}
+                      className="p-2 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-800 hover:text-white hover:border-gray-800 transition-all duration-200"
                       aria-label="Download"
                     >
                       <ArrowDownTrayIcon className="h-5 w-5" />
@@ -339,7 +343,7 @@ export default function HistoryPage() {
                     
                     <button
                       onClick={() => deleteHistoryEntry(entry.id)}
-                      className={`p-2 rounded-full ${darkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white`}
+                      className="p-2 rounded-full border border-gray-300 text-gray-500 hover:bg-gray-800 hover:text-white hover:border-gray-800 transition-all duration-200"
                       aria-label="Delete"
                     >
                       <TrashIcon className="h-5 w-5" />

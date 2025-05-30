@@ -24,15 +24,15 @@ services:
     container_name: tts-backend
     restart: always
     ports:
-      - "0.0.0.0:8000:8000"
+      - "8000:8000"
     environment:
       - MONGO_URI=mongodb://admin:password@mongodb:27017/
       - DB_NAME=synsere_tts
       - JWT_SECRET_KEY=your_secure_secret_key_change_in_production
-      - GOOGLE_CLIENT_ID=990510508408-obseipr918cl1fr9crfbubqmqtnlgpp4.apps.googleusercontent.com
-      - GOOGLE_CLIENT_SECRET=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
-      - FRONTEND_URL=http://57.155.0.162:3000
-      - EXTERNAL_IP=57.155.0.162
+      - GOOGLE_CLIENT_ID=191744678764-jeosm1cb3p9l533qp8chs0cnam2folmd.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=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
+      - FRONTEND_URL=http://4.237.56.73:3000
+      - EXTERNAL_IP=4.237.56.73
     volumes:
       - ./backend:/app
     depends_on:
@@ -52,10 +52,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://57.155.0.162:8000
+      # - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://4.237.56.73:8000
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=990510508408-obseipr918cl1fr9crfbubqmqtnlgpp4.apps.googleusercontent.com
-      - EXTERNAL_IP=57.155.0.162
+      - EXTERNAL_IP=4.237.56.73
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -65,6 +65,7 @@ services:
     networks:
       - app-network
     command: ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
+    # command: ["sleep", "infinity"]
 
 # Volume for MongoDB data persistence
 volumes:

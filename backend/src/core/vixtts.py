@@ -11,8 +11,8 @@ from pydub import AudioSegment
 import torchaudio
 import torch
 
-from TTS.TTS.tts.configs.xtts_config import XttsConfig
-from TTS.TTS.tts.models.xtts import Xtts
+from TTS.tts.configs.xtts_config import XttsConfig
+from TTS.tts.models.xtts import Xtts
 from utils.helpers import normalize_vietnamese_text, calculate_keep_len, get_file_name
 
 class ViXTTS:
