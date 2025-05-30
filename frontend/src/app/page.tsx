@@ -256,6 +256,13 @@ export default function Home() {
     console.log('Audio URL state changed:', audioUrl);
   }, [audioUrl]);
   
+  useEffect(() => {
+  if (audioUrl) {
+    setShowPlayer(true);
+    setShowMiniPlayer(false);
+  }
+}, [audioUrl]);
+
   const handleGenerate = async () => {
     console.log("🎵 Starting handleGenerate function");
     
@@ -740,18 +747,31 @@ export default function Home() {
     <div className="h-20"></div>
   </div>
   
-  {/* Mini Player Trigger */}
-  {!showPlayer && (
-    <div
-      onClick={() => {
-        setShowPlayer(true);
-        setShowMiniPlayer(false);
-      }}
-      className={`absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize hover:h-2 transition-all ${
-        darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-      }`}
-    ></div>
-  )}
+{/* Mini Player (alternative version) */}
+{showMiniPlayer && audioUrl && (
+  <div 
+    onClick={() => {
+      setShowPlayer(true);
+      setShowMiniPlayer(false);
+    }}
+    className={`fixed bottom-0 ${
+      screenSize.isLarge 
+        ? 'left-64 right-96' 
+        : screenSize.isMedium 
+          ? 'left-0 right-96' 
+          : 'left-0 right-0'
+    } h-8 flex items-center justify-center cursor-pointer ${
+      darkMode 
+        ? 'bg-gray-800 border-t border-gray-700 hover:bg-gray-700' 
+        : 'bg-gray-100 border-t border-gray-300 hover:bg-gray-200'
+    }`}
+  >
+    <PlayIcon className={`h-4 w-4 mr-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+    <span className={`text-sm truncate max-w-xs ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      {translations.clickToExpand}
+    </span>
+  </div>
+)}
 </main>
           
           {/* Ẩn RightNav khi màn hình nhỏ */}
@@ -825,19 +845,23 @@ export default function Home() {
           </div>
         )}
 
-        {/* Audio Player Footer */}
-        {audioUrl && (
-          <PlayerFooter
-            audioUrl={audioUrl}
-            onClose={() => {
-              setAudioUrl(undefined);
-              setShowPlayer(false);
-              setShowMiniPlayer(false);
-            }}
-            isCompact={screenSize.isSmall}
-            isLoading={isLoading}
-          />
-        )}
+{/* Audio Player Footer */}
+{audioUrl && showPlayer && (
+  <PlayerFooter
+    audioUrl={audioUrl}
+    onClose={() => {
+      setShowPlayer(false);
+      setShowMiniPlayer(true);
+    }}
+    onCompleteClose={() => {
+      setAudioUrl(undefined);
+      setShowPlayer(false);
+      setShowMiniPlayer(false);
+    }}
+    isCompact={screenSize.isSmall}
+    isLoading={isLoading}
+  />
+)}
       </div>
     );
   }

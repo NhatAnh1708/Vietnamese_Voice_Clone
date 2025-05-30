@@ -25,7 +25,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsClient(true);
-    console.log('Current origin:', window.location.origin);
+    console.log('Current origin failed:', window.location.origin);
 
     // Create Google login URL dynamically based on current origin
     const currentOrigin = window.location.origin;
