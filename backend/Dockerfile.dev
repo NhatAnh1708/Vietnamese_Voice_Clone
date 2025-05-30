@@ -27,7 +27,6 @@ RUN uv sync
 
 # Install uvicorn explicitly (more reliable than fastapi-cli)
 RUN uv pip install uvicorn[standard]
-
 # Copy the rest of the application
 COPY . .
 

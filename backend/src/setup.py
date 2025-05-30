@@ -14,7 +14,7 @@ def main():
     run("date")
 
     # Clone TTS repo and install
-    run("rm -rf TTS/")
+    run("sudo rm -rf TTS/")
     run("git clone --branch add-vietnamese-xtts -q https://github.com/thinhlpg/TTS.git")
     run("pip install --use-deprecated=legacy-resolver -e TTS")
 

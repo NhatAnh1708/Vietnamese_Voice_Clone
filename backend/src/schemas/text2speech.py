@@ -15,8 +15,7 @@ class Text2SpeechRequest:
     audio_background: str = ""
     pitch: float = 0.0
     speed: float = 0.0
-    stability: float = 0.0
-    ambient_sound: str = ""
+    ambient_sound: float = 0.0
 
 
 @dataclass

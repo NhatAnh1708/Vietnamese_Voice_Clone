@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 import os
 import subprocess
-import librosa
+import io
+import numpy as np
+from pydub import AudioSegment
+import torchaudio
+
 from typing import Dict, List, Tuple, Optional, Any, AsyncGenerator
 
 from huggingface_hub import hf_hub_download, snapshot_download
@@ -11,9 +15,37 @@ from pydub import AudioSegment
 import torchaudio
 import torch
 
-from TTS.tts.configs.xtts_config import XttsConfig
-from TTS.tts.models.xtts import Xtts
+from TTS.TTS.tts.configs.xtts_config import XttsConfig
+from TTS.TTS.tts.models.xtts import Xtts
 from utils.helpers import normalize_vietnamese_text, calculate_keep_len, get_file_name
+
+EMOTION_PARAMS_MAP = {
+    'happy': {
+        'pitch': 1.15,      # Cao độ cao hơn một chút
+        'stability': 0.9,   # Giọng ổn định, ít biến thiên
+        'ambientSound': -20 # Nhạc nền nhỏ hơn
+    },
+    'sad': {
+        'pitch': 0.9,       # Cao độ thấp hơn
+        'stability': 0.7,   # Có thể có chút biến thiên nhẹ
+        'ambientSound': -10 # Nhạc nền rõ hơn, có thể u buồn
+    },
+    'angry': {
+        'pitch': 1.05,      # Cao độ hơi cao
+        'stability': 0.6,   # Giọng có thể không ổn định, biến thiên nhiều
+        'ambientSound': -18 # Nhạc nền vừa phải
+    },
+    'fear': {
+        'pitch': 1.1,       # Cao độ cao
+        'stability': 0.5,   # Rất không ổn định, biến thiên nhiều
+        'ambientSound': -8  # Nhạc nền lớn, kịch tính
+    },
+    'surprise': {
+        'pitch': 1.2,       # Cao độ rất cao
+        'stability': 0.8,   # Khá ổn định nhưng có thể có nhấn nhá đột ngột
+        'ambientSound': -16 # Nhạc nền vừa phải
+    },
+}
 
 class ViXTTS:
     """Vietnamese Text-to-Speech service using XTTS model."""
@@ -133,6 +165,7 @@ class ViXTTS:
         )
         
         #TODO: Check if GPU is available and move model to GPU
+
         # if torch.cuda.is_available():
         #     self._model.cuda()
 
@@ -262,10 +295,6 @@ class ViXTTS:
         text: str, 
         gpt_cond_latent: Any, 
         speaker_embedding: Any,
-        pitch: float = 0.0,
-        speed: float = 0.0,
-        stability: float = 0.0,
-        use_parameters: bool = False
     ) -> torch.Tensor:
         """Generate speech for the given text.
         
@@ -299,7 +328,7 @@ class ViXTTS:
                 gpt_cond_latent=gpt_cond_latent,
                 speaker_embedding=speaker_embedding,
                 # The following values are carefully chosen for viXTTS
-                temperature=0.3 * (1 + stability),  # Adjust stability (0.15 to 0.6)
+                temperature=0.3,
                 length_penalty=1.0,
                 repetition_penalty=10.0,
                 top_k=30,
@@ -310,21 +339,6 @@ class ViXTTS:
             # Trim waveform based on text length
             keep_len = calculate_keep_len(sentence, self._tts_language)
             wav_chunk["wav"] = wav_chunk["wav"][:keep_len]
-            
-            if use_parameters:
-                logger.info(f"Using parameters: pitch={pitch}, speed={speed}, stability={stability}")
-                # Apply speed adjustment if needed
-                if speed != 1.0:
-                    # Speed adjustment affects the length of the audio
-                    wav_data = wav_chunk["wav"]
-                    wav_data = librosa.effects.time_stretch(wav_data, rate=speed)
-                    wav_chunk["wav"] = wav_data
-                    
-                # Apply pitch adjustment if needed
-                if pitch != 0.0:
-                    wav_data = wav_chunk["wav"]
-                    wav_data = librosa.effects.pitch_shift(wav_data, sr=24000, n_steps=pitch * 12)
-                    wav_chunk["wav"] = wav_data
                 
             wav_chunks.append(torch.tensor(wav_chunk["wav"]))
 
@@ -334,11 +348,87 @@ class ViXTTS:
             
         return torch.cat(wav_chunks, dim=0).unsqueeze(0)
 
+    def _process_audio_with_parameters(
+        self,
+        audio_waveform: torch.Tensor,
+        pitch: float = 0.0,
+        speed: float = 0.0,
+        stability: float = 0.0,
+    ):
+        """
+        Xử lý các tham số pitch và stability cho audio đầu ra.
+        Args:
+            audio_waveform: Tensor audio đầu vào (1, N)
+            pitch: Hệ số pitch (1.0 là gốc, >1.0 cao hơn, <1.0 thấp hơn)
+            speed: (chưa xử lý ở đây)
+            stability: Độ ổn định (0.0 - biến thiên nhiều, 1.0 - ổn định)
+        Returns:
+            Tensor audio đã xử lý
+        """
+        # Chuyển tensor sang numpy array
+        if audio_waveform.dim() == 2:
+            audio_np = audio_waveform.squeeze(0).cpu().numpy()
+        else:
+            audio_np = audio_waveform.cpu().numpy()
+        # Đảm bảo kiểu float32
+        audio_np = audio_np.astype(np.float32)
+
+        # Ghi ra buffer WAV
+        buffer = io.BytesIO()
+        torchaudio.save(buffer, torch.tensor(audio_np).unsqueeze(0), 24000, format="wav")
+        buffer.seek(0)
+        speech_audio_segment = AudioSegment.from_file(buffer, format="wav")
+
+        # --- Xử lý Pitch (Cao độ) ---
+        pitch_value = pitch if pitch > 0 else 1.0
+        pitch_semitones_change = (pitch_value - 1.0) * 6.0
+        if abs(pitch_semitones_change) > 0.01:
+            # Áp dụng thay đổi cao độ
+            processed_audio_segment = speech_audio_segment._spawn(speech_audio_segment.raw_data, overrides={
+                "frame_rate": int(speech_audio_segment.frame_rate * (2.0 ** (pitch_semitones_change / 12.0)))
+            })
+            # Resample lại để giữ nguyên thời lượng
+            processed_audio_segment = processed_audio_segment.set_frame_rate(speech_audio_segment.frame_rate)
+        else:
+            processed_audio_segment = speech_audio_segment
+
+        # --- Xử lý Stability (Độ ổn định) - Mô phỏng bằng biến thiên ngẫu nhiên ---
+        stability_value = stability if stability > 0 else 1.0
+        variability_factor = 1.0 - stability_value
+        max_random_semitone_change = 0.5
+        random_pitch_change = (np.random.rand() * 2 - 1) * max_random_semitone_change * variability_factor
+        if abs(random_pitch_change) > 0.01:
+            processed_audio_segment = processed_audio_segment._spawn(processed_audio_segment.raw_data, overrides={
+                "frame_rate": int(processed_audio_segment.frame_rate * (2.0 ** (random_pitch_change / 12.0)))
+            })
+            processed_audio_segment = processed_audio_segment.set_frame_rate(speech_audio_segment.frame_rate)
+
+        # --- Xử lý Speed (Tốc độ) ---
+        speed_value = speed if speed > 0 else 1.0
+        if abs(speed_value - 1.0) > 0.01:
+            processed_audio_segment = processed_audio_segment._spawn(
+                processed_audio_segment.raw_data,
+                overrides={"frame_rate": int(processed_audio_segment.frame_rate * speed_value)}
+            )
+            processed_audio_segment = processed_audio_segment.set_frame_rate(speech_audio_segment.frame_rate)
+
+        # Xuất audio đã xử lý ra buffer
+        processed_audio_buffer = io.BytesIO()
+        processed_audio_segment.export(processed_audio_buffer, format="wav")
+        processed_audio_buffer.seek(0)
+        # Đọc lại thành tensor
+        processed_waveform, sr = torchaudio.load(processed_audio_buffer)
+        # Đảm bảo sample rate đúng
+        if sr != 24000:
+            processed_waveform = torchaudio.functional.resample(processed_waveform, sr, 24000)
+        return processed_waveform
+
     def _process_audio_with_background(
         self, 
         audio_waveform: torch.Tensor, 
         output_basename: str,
-        background_path: str
+        background_path: str,
+        ambient_sound: float = 0.0
     ) -> str:
         """Process audio with background and save to files.
         
@@ -352,7 +442,7 @@ class ViXTTS:
         """
         # Save raw synthesized audio
         logger.debug(f"Background path: {background_path}")
-        if background_path is None or background_path == "":
+        if background_path is None or background_path == "" or ambient_sound < 0.1:
             final_path = os.path.join(self._output_dir, f"{output_basename}.wav")
             torchaudio.save(final_path, audio_waveform, 24000)
             return final_path
@@ -370,9 +460,10 @@ class ViXTTS:
         # Add background audio
         voice = AudioSegment.from_file(out_path)
         wind_background = AudioSegment.from_file(background_file_path)
-        
-        # Reduce background volume by -10dB (about 50% quieter)
-        wind_background = wind_background - 30
+        if ambient_sound == 1.0:
+            wind_background = wind_background
+        else:
+            wind_background = wind_background - (1-ambient_sound)*100
         
         # Ensure background is not longer than voice
         if len(wind_background) > len(voice):
@@ -413,8 +504,7 @@ class ViXTTS:
         audio_background: str = None,
         pitch: float = 0.0,
         speed: float = 0.0,
-        stability: float = 0.0,
-        ambient_sound: str = "",
+        ambient_sound: float = 0.0,
         use_parameters: bool = False
     ) -> str:
         """Convert text to speech using ViXTTS model with a specific voice.
@@ -460,21 +550,16 @@ class ViXTTS:
         out_wav = self._generate_speech_for_text(
             tts_text, 
             gpt_cond_latent, 
-            speaker_embedding,
-            pitch=pitch,
-            speed=speed,
-            stability=stability,
-            use_parameters=use_parameters
+            speaker_embedding
         )
-        
+        if use_parameters:
+            out_wav = self._process_audio_with_parameters(out_wav, pitch, speed)
         # Build output filename
         gr_audio_id = os.path.basename(os.path.dirname(voice_path))
         output_basename = f"{get_file_name(tts_text)}_{gr_audio_id}"
         
-        # Use ambient_sound if provided, otherwise use audio_background
-        background = ambient_sound if ambient_sound else audio_background
         
-        return self._process_audio_with_background(out_wav, output_basename, background)
+        return self._process_audio_with_background(out_wav, output_basename, audio_background, ambient_sound)
 
     async def inference(
         self,
@@ -485,8 +570,7 @@ class ViXTTS:
         audio_background: str = "",
         pitch: float = 0.0,
         speed: float = 0.0,
-        stability: float = 0.0,
-        ambient_sound: str = "",
+        ambient_sound: float = 0.0,
         use_parameters: bool = False
     ) -> str:
         """Convert text to speech using predefined voice characteristics.
@@ -524,7 +608,6 @@ class ViXTTS:
             audio_background=audio_background,
             pitch=pitch,
             speed=speed,
-            stability=stability,
             ambient_sound=ambient_sound,
             use_parameters=use_parameters
         )

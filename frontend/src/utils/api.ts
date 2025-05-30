@@ -8,14 +8,14 @@ export const getApiUrl = (path: string = '') => {
   if (isBrowser) {
     // Browser environment - use current hostname with backend port
     // Handle special case where 0.0.0.0 gets blocked by browsers
-    let currentHostname = 'api.synsere.asia';
+    let currentHostname = '57.155.0.162:8000';
     
     // If hostname is 0.0.0.0, use the external IP instead
     if (currentHostname === '0.0.0.0') {
       currentHostname = '4.237.56.73'; // Use the server's external IP
     }
     
-    baseUrl = `https://${currentHostname}`;
+    baseUrl = `http://${currentHostname}`;
     
     console.log(`Browser API URL: ${baseUrl}${path} (hostname: ${window.location.hostname} -> ${currentHostname})`);
   } else {

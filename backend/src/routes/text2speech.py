@@ -48,7 +48,6 @@ async def text_to_speech(item: Text2SpeechRequest, current_user = Depends(get_cu
                     audio_background=item.audio_background,
                     pitch=item.pitch,
                     speed=item.speed,
-                    stability=item.stability,
                     ambient_sound=item.ambient_sound,
                     use_parameters=item.use_parameters
                 )
@@ -72,7 +71,6 @@ async def text_to_speech(item: Text2SpeechRequest, current_user = Depends(get_cu
                     audio_background=item.audio_background,
                     pitch=item.pitch,
                     speed=item.speed,
-                    stability=item.stability,
                     ambient_sound=item.ambient_sound,
                     use_parameters=item.use_parameters
                 )

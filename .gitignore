@@ -69,7 +69,7 @@ mongo/*
 # Mongo
 mongo/data/*
 mongo/*
-
+backend/src/model/*
 mongo/data/*
 mongo/*
 # Django stuff:
